@@ -8,6 +8,16 @@
 
 namespace CppSynth {
 
+	enum class MessageType {
+		KEY_ON,
+		KEY_OFF
+	};
+
+	struct Message {
+		MessageType type;
+		double pitch;
+	};
+
 	class AudioSystem final
 	{
 	public:

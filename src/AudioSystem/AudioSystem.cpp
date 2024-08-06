@@ -80,12 +80,23 @@ std::vector<CppSynth::Instruments::Note> NOTES = {
 
 };
 
+std::vector<std::pair<CppSynth::Message, size_t>> MSGs = {
+    { { CppSynth::MessageType::KEY_ON, 0 }, 0 },
+    { { CppSynth::MessageType::KEY_OFF, 0 }, CppSynth::AudioSystem::DEFAULT_SAMPLE_RATE }
+};
+CppSynth::Instruments::SimpleSynth synth;
+
 static void fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples, const CppSynth::AudioSystem::AudioSystemSettings& audioSettings) {
     CppSynth::ABuffer buffer(audioSettings.AudioBufferSize);
     memset(buffer.Data(), SAMPLE_EQUILIBRIUM, audioSettings.AudioBufferSize * sizeof(Sample));
 
-    CppSynth::Instruments::SimpleSynth synth;
-    synth.fillAudioBuffer(buffer, bufferStartTimeSamples, NOTES, audioSettings);
+    for (const auto& msg : MSGs) {
+        if (bufferStartTimeSamples <= msg.second && msg.second < bufferStartTimeSamples + audioSettings.AudioBufferSize) {
+            synth.message(msg.first);
+        }
+    }
+
+    synth.fillAudioBuffer(buffer, bufferStartTimeSamples, audioSettings);
 
     alBufferData(bufferID, AUDIO_FORMAT, buffer.Data(), static_cast<ALsizei>(audioSettings.AudioBufferSize * sizeof(Sample)), static_cast<ALsizei>(audioSettings.SampleRate));
 }

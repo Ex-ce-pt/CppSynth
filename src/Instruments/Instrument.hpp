@@ -14,17 +14,18 @@ namespace CppSynth::Instruments {
         double pitch;
     };
 
-
     class Instrument {
     public:
         // ANY generator function must be able to fill any arbitrary buffer with any section of its correspondent audio
         using GeneratorFn = void(*)(ABuffer& buffer, double amp, double freq, size_t sampleRate, size_t offsetSample);
 
     public:
-        //void keyOn();
-        //void keyOff();
-
-        virtual void fillAudioBuffer(ABuffer& buffer, size_t bufferStartTimeSamples, const std::vector<Note>& notes, const AudioSystem::AudioSystemSettings& audioSettings) noexcept = 0;
+        void message(const Message& msg);
+        
+        virtual void fillAudioBuffer(ABuffer& buffer, size_t bufferStartTimeSamples, const AudioSystem::AudioSystemSettings& audioSettings) noexcept = 0;
+        
+    protected:
+        std::vector<Message> messages;
     };
 
 }
