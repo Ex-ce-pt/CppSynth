@@ -1,6 +1,6 @@
-﻿#include <iostream>
+﻿#include "AudioSystem/AudioSystem.hpp"
 
-#include "AudioSystem/AudioSystem.hpp"
+#include <cstdio>
 
 int main() {
     printf("Initializing the Audio System [DEFAULT settings]...\n");

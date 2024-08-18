@@ -1,35 +1,34 @@
 #include "SimpleSynth.hpp"
+#include "../Utils/Utils.hpp"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include "../Utils/Utils.hpp"
-
 // Generators
 
-static void gen_sin(CppSynth::ABuffer& buffer, double amp, double freq, size_t sampleRate, size_t offsetSample = 0) noexcept
+static void gen_sin(CppSynth::ABuffer& buffer, double amp, double freq, uint64_t sampleRate, size_t phaseSample = 0) noexcept
 {
     for (size_t i = 0; i < buffer.Size(); i++) {
-        double timeSec = static_cast<double>(offsetSample + i) / sampleRate;
+        double timeSec = static_cast<double>(phaseSample + i) / sampleRate;
         Sample value = static_cast<Sample>(amp * SAMPLE_MAX_VALUE * sin(2.0 * M_PI * freq * timeSec));
         buffer[i] = value;
     }
 }
 
-static void gen_saw(CppSynth::ABuffer& buffer, double amp, double freq, size_t sampleRate, size_t offsetSample = 0) noexcept
+static void gen_saw(CppSynth::ABuffer& buffer, double amp, double freq, uint64_t sampleRate, size_t phaseSample = 0) noexcept
 {
     for (size_t i = 0; i < buffer.Size(); i++) {
-        double timeSec = static_cast<double>(offsetSample + i) / sampleRate;
+        double timeSec = static_cast<double>(phaseSample + i) / sampleRate;
         double x = freq * timeSec;
         Sample value = static_cast<Sample>((x - floor(x)) * amp * SAMPLE_MAX_VALUE);
         buffer[i] = value;
     }
 }
 
-static void gen_triangle(CppSynth::ABuffer& buffer, double amp, double freq, size_t sampleRate, size_t offsetSample = 0) noexcept
+static void gen_triangle(CppSynth::ABuffer& buffer, double amp, double freq, uint64_t sampleRate, size_t phaseSample = 0) noexcept
 {
     for (size_t i = 0; i < buffer.Size(); i++) {
-        double timeSec = static_cast<double>(offsetSample + i) / sampleRate;
+        double timeSec = static_cast<double>(phaseSample + i) / sampleRate;
         double x = freq * timeSec;
         Sample value = static_cast<Sample>((4 * abs(x + 0.25 - floor(x + 0.75)) - 1) * amp * SAMPLE_MAX_VALUE);
         buffer[i] = value;
@@ -57,8 +56,8 @@ void CppSynth::Instruments::SimpleSynth::fillAudioBuffer(ABuffer& buffer, size_t
 
         // If positive, indicates a phase of the signal about to be generated.
         // If negative, indicates that the event starts somewhere in the middle of the buffer.
-        long long timeBetweenEventAndBufferStartSamples = static_cast<long long>(bufferStartTimeSamples - _event.timeSamples);
-        size_t phaseSample = timeBetweenEventAndBufferStartSamples;
+        int64_t timeBetweenEventAndBufferStartSamples = static_cast<int64_t>(bufferStartTimeSamples - _event.timeSamples);
+        uint64_t phaseSample = timeBetweenEventAndBufferStartSamples;
         size_t bufferOffset = 0;
 
         if (timeBetweenEventAndBufferStartSamples < 0) {

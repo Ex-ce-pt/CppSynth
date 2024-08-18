@@ -112,7 +112,7 @@ static void fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples, cons
     alBufferData(bufferID, AUDIO_FORMAT, buffer.Data(), static_cast<ALsizei>(audioSettings.AudioBufferSize * sizeof(Sample)), static_cast<ALsizei>(audioSettings.SampleRate));
 }
 
-void CppSynth::AudioSystem::Play(size_t startTime) noexcept
+void CppSynth::AudioSystem::Play(uint64_t startTime) noexcept
 {
     m_TimeSamples = startTime;
 

@@ -1,10 +1,10 @@
 #ifndef CPPSYNTH_INSTRUMENTS_INSTRUMENT_HPP
 #define CPPSYNTH_INSTRUMENTS_INSTRUMENT_HPP
 
-#include <vector>
 #include "../AudioSystem/Sample.hpp"
 #include "../AudioSystem/Buffer.hpp"
 #include "../AudioSystem/AudioSystem.hpp"
+#include <vector>
 
 namespace CppSynth::Instruments {
 
@@ -17,12 +17,12 @@ namespace CppSynth::Instruments {
     class Instrument {
     public:
         // ANY generator function must be able to fill any arbitrary buffer with any section of its correspondent audio
-        using GeneratorFn = void(*)(ABuffer& buffer, double amp, double freq, size_t sampleRate, size_t offsetSample);
+        using GeneratorFn = void(*)(ABuffer& buffer, double amp, double freq, uint64_t sampleRate, uint64_t offsetSample);
 
     public:
         void onEvent(const TimedEvent& _event);
         
-        virtual void fillAudioBuffer(ABuffer& buffer, size_t bufferStartTimeSamples, const AudioSystem::AudioSystemSettings& audioSettings) noexcept = 0;
+        virtual void fillAudioBuffer(ABuffer& buffer, uint64_t bufferStartTimeSamples, const AudioSystem::AudioSystemSettings& audioSettings) noexcept = 0;
         
     protected:
         std::vector<TimedEvent> events;
