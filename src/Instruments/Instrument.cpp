@@ -2,18 +2,18 @@
 
 #include <algorithm>
 
-void CppSynth::Instruments::Instrument::message(const Message& msg)
+void CppSynth::Instruments::Instrument::onEvent(const TimedEvent& _event)
 {
-	switch (msg.type) {
-	case MessageType::KEY_ON:
-		messages.push_back(msg);
+	switch (_event.e.type) {
+	case EventType::KEY_ON:
+		events.push_back(_event);
 		break;
 
-	case MessageType::KEY_OFF:
+	case EventType::KEY_OFF:
 		{
-			auto correspondingKeyOn = std::find_if(messages.begin(), messages.end(), [&msg](const Message& m) { return m.type == MessageType::KEY_ON && m.pitch == msg.pitch; });
-			if (correspondingKeyOn == messages.end()) return;
-			*correspondingKeyOn = msg;
+			auto correspondingKeyOn = std::find_if(events.begin(), events.end(), [&_event](const TimedEvent& _e) { return _e.e.type == EventType::KEY_ON && _e.e.pitch == _event.e.pitch; });
+			if (correspondingKeyOn == events.end()) return;
+			*correspondingKeyOn = _event;
 		}
 		break;
 		

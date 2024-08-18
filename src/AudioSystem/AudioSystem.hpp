@@ -8,14 +8,19 @@
 
 namespace CppSynth {
 
-	enum class MessageType {
+	enum class EventType {
 		KEY_ON,
 		KEY_OFF
 	};
 
-	struct Message {
-		MessageType type;
+	struct Event {
+		EventType type;
 		double pitch;
+	};
+
+	struct TimedEvent {
+		Event e;
+		size_t timeSamples;
 	};
 
 	class AudioSystem final

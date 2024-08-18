@@ -43,6 +43,8 @@ bool CppSynth::AudioSystem::Init() noexcept
 	return true;
 }
 
+// DEBUG
+
 std::vector<CppSynth::Instruments::Note> NOTES = {
     { 0.0, 0.5, 0.0 },
     { 1.0, 0.5, 0.0 },
@@ -80,19 +82,28 @@ std::vector<CppSynth::Instruments::Note> NOTES = {
 
 };
 
-std::vector<std::pair<CppSynth::Message, size_t>> MSGs = {
-    { { CppSynth::MessageType::KEY_ON, 0 }, 0 },
-    { { CppSynth::MessageType::KEY_OFF, 0 }, CppSynth::AudioSystem::DEFAULT_SAMPLE_RATE }
-};
-CppSynth::Instruments::SimpleSynth synth;
+std::vector<CppSynth::TimedEvent> EVENTS;
+CppSynth::Instruments::SimpleSynth synth(CppSynth::Instruments::SimpleSynth::WaveType::SINE);
+
+static void transformNotesIntoEvents(size_t sampleRate) {
+    EVENTS.clear();
+
+    //return;
+    for (const auto& note : NOTES) {
+        EVENTS.push_back({ { CppSynth::EventType::KEY_ON, note.pitch }, static_cast<size_t>(note.startSec * sampleRate) });
+        EVENTS.push_back({ { CppSynth::EventType::KEY_OFF, note.pitch }, static_cast<size_t>((note.startSec + note.durationSec) * sampleRate) });
+    }
+}
+
+////////
 
 static void fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples, const CppSynth::AudioSystem::AudioSystemSettings& audioSettings) {
     CppSynth::ABuffer buffer(audioSettings.AudioBufferSize);
     memset(buffer.Data(), SAMPLE_EQUILIBRIUM, audioSettings.AudioBufferSize * sizeof(Sample));
 
-    for (const auto& msg : MSGs) {
-        if (bufferStartTimeSamples <= msg.second && msg.second < bufferStartTimeSamples + audioSettings.AudioBufferSize) {
-            synth.message(msg.first);
+    for (const auto& te : EVENTS) {
+        if (bufferStartTimeSamples <= te.timeSamples && te.timeSamples < bufferStartTimeSamples + audioSettings.AudioBufferSize) {
+            synth.onEvent(te);
         }
     }
 
@@ -105,6 +116,7 @@ void CppSynth::AudioSystem::Play(size_t startTime) noexcept
 {
     m_TimeSamples = startTime;
 
+    transformNotesIntoEvents(m_Settings.SampleRate);
     for (size_t i = 0; i < m_Settings.NumberOfAudioBuffers; i++) {
         fillAudioBuffer(m_AudioBuffers[i], m_TimeSamples, m_Settings);
         m_TimeSamples += m_Settings.AudioBufferSize;
@@ -135,8 +147,6 @@ void CppSynth::AudioSystem::Play(size_t startTime) noexcept
         for (size_t i = 0; i < numBuffersProcessed; i++) {
             ALuint buffer;
             alSourceUnqueueBuffers(m_Source, 1, &buffer);
-
-            printf("New buffer\n");
 
             fillAudioBuffer(buffer, m_TimeSamples, m_Settings);
             m_TimeSamples += m_Settings.AudioBufferSize;

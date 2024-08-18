@@ -9,7 +9,8 @@ namespace CppSynth::Instruments {
     public:
         enum class WaveType {
             SINE,
-            SAW
+            SAW,
+            TRIANGLE
         };
 
     public:

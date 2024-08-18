@@ -22,7 +22,17 @@ static void gen_saw(CppSynth::ABuffer& buffer, double amp, double freq, size_t s
         double timeSec = static_cast<double>(offsetSample + i) / sampleRate;
         double x = freq * timeSec;
         Sample value = static_cast<Sample>((x - floor(x)) * amp * SAMPLE_MAX_VALUE);
-        buffer[i] += value;
+        buffer[i] = value;
+    }
+}
+
+static void gen_triangle(CppSynth::ABuffer& buffer, double amp, double freq, size_t sampleRate, size_t offsetSample = 0) noexcept
+{
+    for (size_t i = 0; i < buffer.Size(); i++) {
+        double timeSec = static_cast<double>(offsetSample + i) / sampleRate;
+        double x = freq * timeSec;
+        Sample value = static_cast<Sample>((4 * abs(x + 0.25 - floor(x + 0.75)) - 1) * amp * SAMPLE_MAX_VALUE);
+        buffer[i] = value;
     }
 }
 
@@ -33,6 +43,7 @@ CppSynth::Instruments::SimpleSynth::SimpleSynth(WaveType wave)
     switch (wave) {
     case WaveType::SINE: m_Generator = gen_sin; break;
     case WaveType::SAW: m_Generator = gen_saw; break;
+    case WaveType::TRIANGLE: m_Generator = gen_triangle; break;
     default: return;
     }
 }
@@ -41,18 +52,29 @@ void CppSynth::Instruments::SimpleSynth::fillAudioBuffer(ABuffer& buffer, size_t
 {
     if (m_Generator == nullptr) return;
 
-    for (const Message& msg : messages) {
-        if (msg.type == MessageType::KEY_OFF) continue;
+    for (const TimedEvent& _event : events) {
+        if (_event.e.type == EventType::KEY_OFF) continue;
+
+        // If positive, indicates a phase of the signal about to be generated.
+        // If negative, indicates that the event starts somewhere in the middle of the buffer.
+        long long timeBetweenEventAndBufferStartSamples = static_cast<long long>(bufferStartTimeSamples - _event.timeSamples);
+        size_t phaseSample = timeBetweenEventAndBufferStartSamples;
+        size_t bufferOffset = 0;
+
+        if (timeBetweenEventAndBufferStartSamples < 0) {
+            phaseSample = 0;
+            bufferOffset = -timeBetweenEventAndBufferStartSamples;
+        }
 
         // Render the data into a separate buffer
-        ABuffer noteDataBuffer(buffer.Size());
+        ABuffer noteDataBuffer(buffer.Size() - bufferOffset);
 
         // TODO: make abstract
-        m_Generator(noteDataBuffer, 0.3, A4 * pow(2, 0 / 12.0), audioSettings.SampleRate, bufferStartTimeSamples);
+        m_Generator(noteDataBuffer, 0.3, A4 * pow(2, _event.e.pitch / 12.0), audioSettings.SampleRate, phaseSample);
 
         // Merge the resulting buffer with the rest of the audio
-        for (size_t i = 0; i < buffer.Size(); i++) {
-            buffer[i] += noteDataBuffer[i];
+        for (size_t i = 0; i < noteDataBuffer.Size(); i++) {
+            buffer[bufferOffset + i] += noteDataBuffer[i];
         }
     }
 }
