@@ -1,22 +1,37 @@
 #ifndef CPPSYNTH_AUDIOSYSTEM_AUDIOSYSTEM_HPP
 #define CPPSYNTH_AUDIOSYSTEM_AUDIOSYSTEM_HPP
 
+#include "Buffer.hpp"
 #include <AL/al.h>
 #include <AL/alc.h>
 #include <atomic>
-#include "Buffer.hpp"
 
 namespace CppSynth {
+
+	enum class EventType {
+		KEY_ON,
+		KEY_OFF
+	};
+
+	struct Event {
+		EventType Type;
+		double Pitch;
+	};
+
+	struct TimedEvent {
+		Event Event;
+		uint64_t TimeSamples;
+	};
 
 	class AudioSystem final
 	{
 	public:
 		static inline constexpr size_t DEFAULT_NUMBER_OF_AUDIO_BUFFERS = 4;
 		static inline constexpr size_t DEFAULT_AUDIO_BUFFER_SIZE = 2048;
-		static inline constexpr size_t DEFAULT_SAMPLE_RATE = 44100;
+		static inline constexpr uint64_t DEFAULT_SAMPLE_RATE = 44100;
 
 		struct AudioSystemSettings {
-			size_t SampleRate = DEFAULT_SAMPLE_RATE;
+			uint64_t SampleRate = DEFAULT_SAMPLE_RATE;
 			bool Stereo = false;
 			size_t NumberOfAudioBuffers = DEFAULT_NUMBER_OF_AUDIO_BUFFERS;
 			size_t AudioBufferSize = DEFAULT_AUDIO_BUFFER_SIZE;
@@ -27,7 +42,7 @@ namespace CppSynth {
 		~AudioSystem();
 
 		bool Init() noexcept;
-		void Play(size_t startTime = 0) noexcept;
+		void Play(uint64_t startTime = 0) noexcept;
 		void Close() noexcept;
 
 		inline bool IsPlaying() noexcept;
@@ -41,7 +56,7 @@ namespace CppSynth {
 
 		bool m_Initialized = false;
 		std::atomic_bool m_Playing = false;
-		size_t m_TimeSamples = 0;
+		uint64_t m_TimeSamples = 0;
 	};
 
 }

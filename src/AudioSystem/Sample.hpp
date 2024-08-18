@@ -1,4 +1,5 @@
 #include <AL/al.h>
+#include <cstdint>
 
 #define AUDIO_FORMAT AL_FORMAT_MONO16
 //#define AUDIO_FORMAT AL_FORMAT_MONO8

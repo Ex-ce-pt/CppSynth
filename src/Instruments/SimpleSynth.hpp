@@ -9,13 +9,14 @@ namespace CppSynth::Instruments {
     public:
         enum class WaveType {
             SINE,
-            SAW
+            SAW,
+            TRIANGLE
         };
 
     public:
         SimpleSynth(WaveType wave = WaveType::SINE);
 
-        virtual void fillAudioBuffer(ABuffer& buffer, size_t bufferStartTimeSamples, const std::vector<Note>& notes, const AudioSystem::AudioSystemSettings& audioSettings) noexcept override;
+        virtual void fillAudioBuffer(ABuffer& buffer, uint64_t bufferStartTimeSamples, const AudioSystem::AudioSystemSettings& audioSettings) noexcept override;
 
     private:
         GeneratorFn m_Generator = nullptr;
