@@ -1,11 +1,10 @@
 #include "AudioSystem.hpp"
+#include "Sample.hpp"
+#include "../Instruments/SimpleSynth.hpp"
 
 #include <chrono>
 #include <thread>
-
 #include <iostream>
-#include "Sample.hpp"
-#include "../Instruments/SimpleSynth.hpp"
 
 CppSynth::AudioSystem::AudioSystem(const AudioSystemSettings& settings)
     : m_Settings(settings), m_AudioBuffers(settings.NumberOfAudioBuffers)
@@ -45,53 +44,17 @@ bool CppSynth::AudioSystem::Init() noexcept
 
 // DEBUG
 
-std::vector<CppSynth::Instruments::Note> NOTES = {
-    { 0.0, 0.5, 0.0 },
-    { 1.0, 0.5, 0.0 },
-    { 1.5, 0.25, -2.0 },
-    { 1.75, 0.25, 0.0 },
-    { 2.5, 0.5, 0 },
-    { 3.0, 0.25, 3.0 },
-    { 3.25, 0.5, 5.0 },
-    { 4.0, 1.0, 6.0 },
-    { 5.0, 0.5, 5.0 },
-    { 5.5, 0.5, 3.0 },
-    { 6.0, 0.5, 0.0 },
-    { 6.5, 0.5, -2.0 },
-    { 7.0, 0.25, 0.0 },
-    { 7.25, 0.25, -2.0 },
-    { 7.5, 0.25, 0.0 },
-    { 7.75, 0.25, 3.0 },
-
-    { 8.0, 0.5, 0.0 },
-    { 9.0, 0.5, 0.0 },
-    { 9.5, 0.25, 3.0 },
-    { 9.75, 0.25, 0.0 },
-    { 10.5, 0.5, 0 },
-    { 11.0, 0.25, 3.0 },
-    { 11.25, 0.5, 5.0 },
-    { 12.0, 1.0, 6.0 },
-    { 13.0, 0.5, 5.0 },
-    { 13.5, 0.5, 3.0 },
-    { 14.0, 0.5, 0.0 },
-    { 14.5, 0.5, -2.0 },
-    { 15.0, 0.25, 0.0 },
-    { 15.25, 0.25, -2.0 },
-    { 15.5, 0.25, 0.0 },
-    { 15.75, 0.25, 3.0 },
-
-};
+#include "song.hpp"
 
 std::vector<CppSynth::TimedEvent> EVENTS;
-CppSynth::Instruments::SimpleSynth synth(CppSynth::Instruments::SimpleSynth::WaveType::SINE);
+CppSynth::Instruments::SimpleSynth synth(CppSynth::Instruments::SimpleSynth::WaveType::TRIANGLE);
 
-static void transformNotesIntoEvents(size_t sampleRate) {
+static void transformNotesIntoEvents(uint64_t sampleRate) {
     EVENTS.clear();
 
-    //return;
     for (const auto& note : NOTES) {
-        EVENTS.push_back({ { CppSynth::EventType::KEY_ON, note.pitch }, static_cast<size_t>(note.startSec * sampleRate) });
-        EVENTS.push_back({ { CppSynth::EventType::KEY_OFF, note.pitch }, static_cast<size_t>((note.startSec + note.durationSec) * sampleRate) });
+        EVENTS.push_back({ { CppSynth::EventType::KEY_ON, note.pitch }, static_cast<uint64_t>(note.startSec * sampleRate) });
+        EVENTS.push_back({ { CppSynth::EventType::KEY_OFF, note.pitch }, static_cast<uint64_t>((note.startSec + note.durationSec) * sampleRate) });
     }
 }
 
