@@ -1,10 +1,10 @@
 #ifndef CPPSYNTH_AUDIOSYSTEM_AUDIOSYSTEM_HPP
 #define CPPSYNTH_AUDIOSYSTEM_AUDIOSYSTEM_HPP
 
+#include "Buffer.hpp"
 #include <AL/al.h>
 #include <AL/alc.h>
 #include <atomic>
-#include "Buffer.hpp"
 
 namespace CppSynth {
 
@@ -14,13 +14,13 @@ namespace CppSynth {
 	};
 
 	struct Event {
-		EventType type;
-		double pitch;
+		EventType Type;
+		double Pitch;
 	};
 
 	struct TimedEvent {
-		Event e;
-		size_t timeSamples;
+		Event Event;
+		uint64_t TimeSamples;
 	};
 
 	class AudioSystem final

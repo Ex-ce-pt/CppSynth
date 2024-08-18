@@ -2,6 +2,7 @@
 #define CPPSYNTH_AUDIOSYSTEM_BUFFER_HPP
 
 #include "Sample.hpp"
+#include <type_traits>
 
 namespace CppSynth {
 

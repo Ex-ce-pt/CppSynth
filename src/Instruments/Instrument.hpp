@@ -20,12 +20,12 @@ namespace CppSynth::Instruments {
         using GeneratorFn = void(*)(ABuffer& buffer, double amp, double freq, uint64_t sampleRate, uint64_t offsetSample);
 
     public:
-        void onEvent(const TimedEvent& _event);
+        void onEvent(const TimedEvent& tevent);
         
         virtual void fillAudioBuffer(ABuffer& buffer, uint64_t bufferStartTimeSamples, const AudioSystem::AudioSystemSettings& audioSettings) noexcept = 0;
         
     protected:
-        std::vector<TimedEvent> events;
+        std::vector<TimedEvent> m_CurrentEvents;
     };
 
 }

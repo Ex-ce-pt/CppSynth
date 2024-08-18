@@ -101,9 +101,9 @@ static void fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples, cons
     CppSynth::ABuffer buffer(audioSettings.AudioBufferSize);
     memset(buffer.Data(), SAMPLE_EQUILIBRIUM, audioSettings.AudioBufferSize * sizeof(Sample));
 
-    for (const auto& te : EVENTS) {
-        if (bufferStartTimeSamples <= te.timeSamples && te.timeSamples < bufferStartTimeSamples + audioSettings.AudioBufferSize) {
-            synth.onEvent(te);
+    for (const auto& tevent : EVENTS) {
+        if (bufferStartTimeSamples <= tevent.TimeSamples && tevent.TimeSamples < bufferStartTimeSamples + audioSettings.AudioBufferSize) {
+            synth.onEvent(tevent);
         }
     }
 
@@ -122,7 +122,7 @@ void CppSynth::AudioSystem::Play(uint64_t startTime) noexcept
         m_TimeSamples += m_Settings.AudioBufferSize;
     }
 
-    alSourceQueueBuffers(m_Source, m_Settings.NumberOfAudioBuffers, m_AudioBuffers.Data());
+    alSourceQueueBuffers(m_Source, static_cast<ALsizei>(m_Settings.NumberOfAudioBuffers), m_AudioBuffers.Data());
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
     
@@ -164,7 +164,7 @@ void CppSynth::AudioSystem::Close() noexcept
     if (!m_Initialized) return;
 
     alDeleteSources(1, &m_Source);
-    alDeleteBuffers(m_Settings.NumberOfAudioBuffers, m_AudioBuffers.Data());
+    alDeleteBuffers(static_cast<ALsizei>(m_Settings.NumberOfAudioBuffers), m_AudioBuffers.Data());
     alcMakeContextCurrent(NULL);
     alcDestroyContext(m_CurrentContext);
     alcCloseDevice(m_CurrentDevice);
