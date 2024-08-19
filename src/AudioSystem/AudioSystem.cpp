@@ -16,20 +16,20 @@ CppSynth::AudioSystem::~AudioSystem()
     Close();
 }
 
-bool CppSynth::AudioSystem::Init() noexcept
+CppSynth::AudioSystem::AudioSystemStatus CppSynth::AudioSystem::Init() noexcept
 {
     // Open default device
     m_CurrentDevice = alcOpenDevice(NULL);
     if (!m_CurrentDevice) {
         std::cerr << "Unable to open default device" << std::endl;
-        return false;
+        return AudioSystemStatus::FAILED_TO_CONNECT_DEVICE;
     }
 
     // Create context
     m_CurrentContext = alcCreateContext(m_CurrentDevice, NULL);
     if (!alcMakeContextCurrent(m_CurrentContext)) {
         std::cerr << "Failed to make context current" << std::endl;
-        return false;
+        return AudioSystemStatus::FAILED_TO_CREATE_CONTEXT;
     }
 
     alGenBuffers(static_cast<ALsizei>(m_Settings.NumberOfAudioBuffers), m_AudioBuffers.Data());
@@ -37,7 +37,7 @@ bool CppSynth::AudioSystem::Init() noexcept
 
     m_Initialized = true;
 
-	return true;
+	return AudioSystemStatus::SUCCESS;
 }
 
 void CppSynth::AudioSystem::Close() noexcept

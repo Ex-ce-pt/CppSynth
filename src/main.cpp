@@ -7,11 +7,24 @@ int main() {
 
     // Initialize OpenAL
     CppSynth::AudioSystem audioSystem;
-    if (!audioSystem.Init()) {
-        return -1;
-    }
+    auto status = audioSystem.Init();
+    switch (status) {
+        case CppSynth::AudioSystem::AudioSystemStatus::SUCCESS:
+            printf("Audio System Initialized\n");
+            break;
 
-    printf("Audio System Initialized\n");
+        case CppSynth::AudioSystem::AudioSystemStatus::FAILED_TO_CONNECT_DEVICE:
+            printf("Failed to connect the default device\n");
+            return -1;
+
+        case CppSynth::AudioSystem::AudioSystemStatus::FAILED_TO_CREATE_CONTEXT:
+            printf("Failed to create context for the default device\n");
+            return -2;
+
+        default:
+            printf("Undefined status of the Audio System: %i\n", status);
+            return -10;
+    }
     
     audioSystem.SetTimeSeconds(0);
     audioSystem.Play();

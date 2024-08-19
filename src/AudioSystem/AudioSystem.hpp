@@ -39,13 +39,19 @@ namespace CppSynth {
 			size_t AudioBufferSize = DEFAULT_AUDIO_BUFFER_SIZE;
 		};
 
+		enum class AudioSystemStatus {
+			SUCCESS,
+			FAILED_TO_CONNECT_DEVICE,
+			FAILED_TO_CREATE_CONTEXT
+		};
+
 	public:
 		using TimeChangeCallback = void(*)(uint64_t newTime);
 
 		AudioSystem(const AudioSystemSettings& settings = {});
 		~AudioSystem();
 
-		bool Init() noexcept;
+		AudioSystemStatus Init() noexcept;
 		void Close() noexcept;
 
 		void SetTimeSamples(uint64_t timeSamples) noexcept;
