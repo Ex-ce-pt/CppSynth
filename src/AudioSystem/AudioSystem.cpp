@@ -3,7 +3,6 @@
 #include "../Instruments/SimpleSynth.hpp"
 
 #include <chrono>
-#include <thread>
 #include <iostream>
 
 CppSynth::AudioSystem::AudioSystem(const AudioSystemSettings& settings)
@@ -12,10 +11,9 @@ CppSynth::AudioSystem::AudioSystem(const AudioSystemSettings& settings)
 
 CppSynth::AudioSystem::~AudioSystem()
 {
-	if (m_Initialized)
-	{
-		Close();
-	}
+    if (!m_Initialized) return;
+
+    Close();
 }
 
 bool CppSynth::AudioSystem::Init() noexcept
@@ -40,6 +38,20 @@ bool CppSynth::AudioSystem::Init() noexcept
     m_Initialized = true;
 
 	return true;
+}
+
+void CppSynth::AudioSystem::Close() noexcept
+{
+    if (!m_Initialized) return;
+
+    alDeleteSources(1, &m_Source);
+    alDeleteBuffers(static_cast<ALsizei>(m_Settings.NumberOfAudioBuffers), m_AudioBuffers.Data());
+    alcMakeContextCurrent(NULL);
+    alcDestroyContext(m_CurrentContext);
+    alcCloseDevice(m_CurrentDevice);
+
+    m_Initialized = false;
+    m_Playing = false;
 }
 
 // DEBUG
@@ -75,9 +87,23 @@ static void fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples, cons
     alBufferData(bufferID, AUDIO_FORMAT, buffer.Data(), static_cast<ALsizei>(audioSettings.AudioBufferSize * sizeof(Sample)), static_cast<ALsizei>(audioSettings.SampleRate));
 }
 
-void CppSynth::AudioSystem::Play(uint64_t startTime) noexcept
+void CppSynth::AudioSystem::SetTimeSamples(uint64_t timeSamples) noexcept
 {
-    m_TimeSamples = startTime;
+    m_TimeSamples = timeSamples;
+}
+
+void CppSynth::AudioSystem::SetTimeSeconds(double timeSeconds) noexcept
+{
+    m_TimeSamples = timeSeconds * m_Settings.SampleRate;
+}
+
+void CppSynth::AudioSystem::SetTimeChangeCallback(TimeChangeCallback cb) noexcept
+{
+    m_TimeChangeCallback = cb;
+}
+
+void CppSynth::AudioSystem::Play() noexcept
+{
 
     transformNotesIntoEvents(m_Settings.SampleRate);
     for (size_t i = 0; i < m_Settings.NumberOfAudioBuffers; i++) {
@@ -96,46 +122,60 @@ void CppSynth::AudioSystem::Play(uint64_t startTime) noexcept
     double duration = NOTES.crbegin()->startSec + NOTES.crbegin()->durationSec + 1; // Duration in seconds
     long double amplitude = 0.3;
 
-    // Wait for the sound to finish playing
-    ALint state;
-    do {
-        alGetSourcei(m_Source, AL_SOURCE_STATE, &state);
+    m_AudioPlayerThread = std::make_unique<std::thread>([this, duration]() {
+        // Wait for the sound to finish playing
+        ALint state;
+        do {
+            alGetSourcei(m_Source, AL_SOURCE_STATE, &state);
 
-        // If the last buffer las already been filled, there is no reason to refill anything
-        if (m_TimeSamples >= duration * m_Settings.SampleRate) continue;
+            // If the last buffer has already been filled, there is no reason to refill anything
+            if (m_TimeSamples >= duration * m_Settings.SampleRate) continue;
 
-        ALint numBuffersProcessed;
-        alGetSourcei(m_Source, AL_BUFFERS_PROCESSED, &numBuffersProcessed);
+            ALint numBuffersProcessed;
+            alGetSourcei(m_Source, AL_BUFFERS_PROCESSED, &numBuffersProcessed);
 
-        for (size_t i = 0; i < numBuffersProcessed; i++) {
-            ALuint buffer;
-            alSourceUnqueueBuffers(m_Source, 1, &buffer);
+            for (size_t i = 0; i < numBuffersProcessed; i++) {
+                ALuint buffer;
+                alSourceUnqueueBuffers(m_Source, 1, &buffer);
 
-            fillAudioBuffer(buffer, m_TimeSamples, m_Settings);
-            m_TimeSamples += m_Settings.AudioBufferSize;
+                fillAudioBuffer(buffer, m_TimeSamples, m_Settings);
+                m_TimeSamples += m_Settings.AudioBufferSize;
 
-            alSourceQueueBuffers(m_Source, 1, &buffer);
-        }
+                alSourceQueueBuffers(m_Source, 1, &buffer);
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                if (m_TimeChangeCallback) m_TimeChangeCallback(m_TimeSamples);
+            }
 
-    } while (state == AL_PLAYING);
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
+        } while (state == AL_PLAYING && m_Playing);
+        m_Playing = false;
+    });
 }
 
-void CppSynth::AudioSystem::Close() noexcept
+void CppSynth::AudioSystem::Pause() noexcept
 {
-    if (!m_Initialized) return;
+    m_Playing = false;
+}
 
-    alDeleteSources(1, &m_Source);
-    alDeleteBuffers(static_cast<ALsizei>(m_Settings.NumberOfAudioBuffers), m_AudioBuffers.Data());
-    alcMakeContextCurrent(NULL);
-    alcDestroyContext(m_CurrentContext);
-    alcCloseDevice(m_CurrentDevice);
+void CppSynth::AudioSystem::JoinPlayerThread() noexcept
+{
+    if (!m_AudioPlayerThread) return;
 
-    m_Initialized = false;
+    m_AudioPlayerThread->join();
 }
 
 inline bool CppSynth::AudioSystem::IsPlaying() noexcept
 {
     return m_Playing;
+}
+
+inline uint64_t CppSynth::AudioSystem::GetTimeSamples() noexcept
+{
+    return m_TimeSamples;
+}
+
+double CppSynth::AudioSystem::GetTimeSeconds() noexcept
+{
+    return m_TimeSamples / static_cast<double>(m_Settings.SampleRate);
 }

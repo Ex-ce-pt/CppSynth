@@ -5,6 +5,8 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 #include <atomic>
+#include <memory>
+#include <thread>
 
 namespace CppSynth {
 
@@ -38,14 +40,24 @@ namespace CppSynth {
 		};
 
 	public:
+		using TimeChangeCallback = void(*)(uint64_t newTime);
+
 		AudioSystem(const AudioSystemSettings& settings = {});
 		~AudioSystem();
 
 		bool Init() noexcept;
-		void Play(uint64_t startTime = 0) noexcept;
 		void Close() noexcept;
 
+		void SetTimeSamples(uint64_t timeSamples) noexcept;
+		void SetTimeSeconds(double timeSeconds) noexcept;
+		void SetTimeChangeCallback(TimeChangeCallback cb) noexcept;
+		void Play() noexcept;
+		void Pause() noexcept;
+		void JoinPlayerThread() noexcept;
+
 		inline bool IsPlaying() noexcept;
+		inline uint64_t GetTimeSamples() noexcept;
+		double GetTimeSeconds() noexcept;
 
 	private:
 		AudioSystemSettings m_Settings;
@@ -57,6 +69,8 @@ namespace CppSynth {
 		bool m_Initialized = false;
 		std::atomic_bool m_Playing = false;
 		uint64_t m_TimeSamples = 0;
+		std::unique_ptr<std::thread> m_AudioPlayerThread;
+		TimeChangeCallback m_TimeChangeCallback = nullptr;
 	};
 
 }

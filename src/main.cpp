@@ -13,8 +13,12 @@ int main() {
 
     printf("Audio System Initialized\n");
     
+    audioSystem.SetTimeSeconds(0);
     audioSystem.Play();
+    audioSystem.JoinPlayerThread();
 
+    printf("Finished playing\n");
+    printf("Closing the Audio System...");
     audioSystem.Close();
 
     return 0;
