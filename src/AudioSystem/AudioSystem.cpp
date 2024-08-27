@@ -150,15 +150,11 @@ void CppSynth::AudioSystem::FillAudioBuffer(ALuint bufferID, size_t bufferStartT
 
 uint64_t CppSynth::AudioSystem::GetTracksTotalDurationSamples()
 {
-	auto t = std::chrono::steady_clock::now();
-
 	uint64_t maxEventTimeSamples = 0;
 
 	for (const auto& [_, events] : m_Tracks) {
 		maxEventTimeSamples = std::max_element(std::execution::par, events.begin(), events.end(), [](const auto& lhs, const auto& rhs) { return lhs.TimeSamples < rhs.TimeSamples; })->TimeSamples;
 	}
-
-	std::cout << "\tDuration: " << ((std::chrono::steady_clock::now() - t).count() * 0.001 * 0.001) << "ms\n";
 
 	return maxEventTimeSamples + m_Settings.PaddingAfterSongEndSeconds * m_Settings.SampleRate;
 }
