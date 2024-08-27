@@ -37,12 +37,14 @@ namespace CppSynth {
 		static inline constexpr size_t DEFAULT_NUMBER_OF_AUDIO_BUFFERS = 4;
 		static inline constexpr size_t DEFAULT_AUDIO_BUFFER_SIZE = 2048;
 		static inline constexpr uint64_t DEFAULT_SAMPLE_RATE = 44100;
+		static inline constexpr double DEFAULT_PADDING_AFTER_SONG_END_SECONDS = 1;
 
 		struct AudioSystemSettings {
 			uint64_t SampleRate = DEFAULT_SAMPLE_RATE;
 			bool Stereo = false;
 			size_t NumberOfAudioBuffers = DEFAULT_NUMBER_OF_AUDIO_BUFFERS;
 			size_t AudioBufferSize = DEFAULT_AUDIO_BUFFER_SIZE;
+			double PaddingAfterSongEndSeconds = DEFAULT_PADDING_AFTER_SONG_END_SECONDS;
 		};
 
 		enum class AudioSystemStatus {
@@ -74,7 +76,7 @@ namespace CppSynth {
 
 	private:
 		void FillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples);
-		double GetTracksTotalDuration();
+		uint64_t GetTracksTotalDurationSamples();
 
 	private:
 		AudioSystemSettings m_Settings;

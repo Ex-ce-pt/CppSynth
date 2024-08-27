@@ -54,38 +54,6 @@ void CppSynth::AudioSystem::Close() noexcept
 	m_Playing = false;
 }
 
-void CppSynth::AudioSystem::FillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples) {
-	auto t = std::chrono::steady_clock::now();
-
-	CppSynth::ABuffer buffer(m_Settings.AudioBufferSize);
-	memset(buffer.Data(), SAMPLE_EQUILIBRIUM, m_Settings.AudioBufferSize * sizeof(Sample));
-
-	for (const auto& [instrument, events] : m_Tracks) {
-		for (const auto& tevent : events) {
-			if (bufferStartTimeSamples <= tevent.TimeSamples && tevent.TimeSamples < bufferStartTimeSamples + m_Settings.AudioBufferSize) {
-				instrument->onEvent(tevent);
-			}
-		}
-
-		instrument->fillAudioBuffer(buffer, bufferStartTimeSamples, m_Settings);
-	}
-
-	alBufferData(bufferID, AUDIO_FORMAT, buffer.Data(), static_cast<ALsizei>(m_Settings.AudioBufferSize * sizeof(Sample)), static_cast<ALsizei>(m_Settings.SampleRate));
-
-	std::cout << "Buffer Fill Time: " << ((std::chrono::steady_clock::now() - t).count() * 0.001 * 0.001) << "ms\n";
-}
-
-double CppSynth::AudioSystem::GetTracksTotalDuration()
-{
-	uint64_t maxEventTimeSamples = 0;
-
-	for (const auto& [_, events] : m_Tracks) {
-		maxEventTimeSamples = std::max(maxEventTimeSamples, events.crbegin()->TimeSamples);
-	}
-
-	return maxEventTimeSamples / static_cast<double>(m_Settings.SampleRate) + 1;
-}
-
 void CppSynth::AudioSystem::SetTimeSamples(uint64_t timeSamples) noexcept
 {
 	m_TimeSamples = timeSamples;
@@ -124,17 +92,19 @@ void CppSynth::AudioSystem::Play() noexcept
 
 	//double duration = NOTES.crbegin()->startSec + NOTES.crbegin()->durationSec + 1; // Duration in seconds
 	
-	double duration = GetTracksTotalDuration();
 	long double amplitude = 0.3;
 
-	m_AudioPlayerThread = std::make_unique<std::thread>([this, duration]() {
+	m_AudioPlayerThread = std::make_unique<std::thread>([this]() {
+		double durationSamples = GetTracksTotalDurationSamples();
+
+
 		// Wait for the sound to finish playing
 		ALint state;
 		do {
 			alGetSourcei(m_Source, AL_SOURCE_STATE, &state);
 
 			// If the last buffer has already been filled, there is no reason to refill anything
-			if (m_TimeSamples >= duration * m_Settings.SampleRate) continue;
+			if (m_TimeSamples >= durationSamples) continue;
 
 			ALint numBuffersProcessed;
 			alGetSourcei(m_Source, AL_BUFFERS_PROCESSED, &numBuffersProcessed);
@@ -156,6 +126,38 @@ void CppSynth::AudioSystem::Play() noexcept
 		} while (state == AL_PLAYING && m_Playing);
 		m_Playing = false;
 		});
+}
+
+void CppSynth::AudioSystem::FillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples) {
+	auto t = std::chrono::steady_clock::now();
+
+	CppSynth::ABuffer buffer(m_Settings.AudioBufferSize);
+	memset(buffer.Data(), SAMPLE_EQUILIBRIUM, m_Settings.AudioBufferSize * sizeof(Sample));
+
+	for (const auto& [instrument, events] : m_Tracks) {
+		for (const auto& tevent : events) {
+			if (bufferStartTimeSamples <= tevent.TimeSamples && tevent.TimeSamples < bufferStartTimeSamples + m_Settings.AudioBufferSize) {
+				instrument->onEvent(tevent);
+			}
+		}
+
+		instrument->fillAudioBuffer(buffer, bufferStartTimeSamples, m_Settings);
+	}
+
+	alBufferData(bufferID, AUDIO_FORMAT, buffer.Data(), static_cast<ALsizei>(m_Settings.AudioBufferSize * sizeof(Sample)), static_cast<ALsizei>(m_Settings.SampleRate));
+
+	std::cout << "Buffer Fill Time: " << ((std::chrono::steady_clock::now() - t).count() * 0.001 * 0.001) << "ms\n";
+}
+
+uint64_t CppSynth::AudioSystem::GetTracksTotalDurationSamples()
+{
+	uint64_t maxEventTimeSamples = 0;
+
+	for (const auto& [_, events] : m_Tracks) {
+		maxEventTimeSamples = std::max(maxEventTimeSamples, events.crbegin()->TimeSamples);
+	}
+
+	return maxEventTimeSamples + m_Settings.PaddingAfterSongEndSeconds * m_Settings.SampleRate;
 }
 
 void CppSynth::AudioSystem::Pause() noexcept
