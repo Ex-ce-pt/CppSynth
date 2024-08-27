@@ -3,6 +3,8 @@
 #include "../Instruments/SimpleSynth.hpp"
 
 #include <chrono>
+#include <algorithm>
+#include <execution>
 #include <iostream>
 
 CppSynth::AudioSystem::AudioSystem(const AudioSystemSettings& settings)
@@ -90,13 +92,10 @@ void CppSynth::AudioSystem::Play() noexcept
 	alSourcePlay(m_Source);
 	m_Playing = true;
 
-	//double duration = NOTES.crbegin()->startSec + NOTES.crbegin()->durationSec + 1; // Duration in seconds
-	
 	long double amplitude = 0.3;
 
 	m_AudioPlayerThread = std::make_unique<std::thread>([this]() {
 		double durationSamples = GetTracksTotalDurationSamples();
-
 
 		// Wait for the sound to finish playing
 		ALint state;
@@ -125,7 +124,7 @@ void CppSynth::AudioSystem::Play() noexcept
 
 		} while (state == AL_PLAYING && m_Playing);
 		m_Playing = false;
-		});
+	});
 }
 
 void CppSynth::AudioSystem::FillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples) {
@@ -151,11 +150,15 @@ void CppSynth::AudioSystem::FillAudioBuffer(ALuint bufferID, size_t bufferStartT
 
 uint64_t CppSynth::AudioSystem::GetTracksTotalDurationSamples()
 {
+	auto t = std::chrono::steady_clock::now();
+
 	uint64_t maxEventTimeSamples = 0;
 
 	for (const auto& [_, events] : m_Tracks) {
-		maxEventTimeSamples = std::max(maxEventTimeSamples, events.crbegin()->TimeSamples);
+		maxEventTimeSamples = std::max_element(std::execution::par, events.begin(), events.end(), [](const auto& lhs, const auto& rhs) { return lhs.TimeSamples < rhs.TimeSamples; })->TimeSamples;
 	}
+
+	std::cout << "\tDuration: " << ((std::chrono::steady_clock::now() - t).count() * 0.001 * 0.001) << "ms\n";
 
 	return maxEventTimeSamples + m_Settings.PaddingAfterSongEndSeconds * m_Settings.SampleRate;
 }
