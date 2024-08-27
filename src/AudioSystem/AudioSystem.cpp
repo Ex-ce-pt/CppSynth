@@ -58,15 +58,23 @@ void CppSynth::AudioSystem::Close() noexcept
 
 #include "song.hpp"
 
-std::vector<CppSynth::TimedEvent> EVENTS;
-CppSynth::Instruments::SimpleSynth synth(CppSynth::Instruments::SimpleSynth::WaveType::TRIANGLE);
+std::vector<CppSynth::TimedEvent> EVENTS_MELODY;
+std::vector<CppSynth::TimedEvent> EVENTS_BASS;
+CppSynth::Instruments::SimpleSynth synth(CppSynth::Instruments::SimpleSynth::WaveType::SINE);
+CppSynth::Instruments::SimpleSynth bassSynth(CppSynth::Instruments::SimpleSynth::WaveType::TRIANGLE);
 
 static void transformNotesIntoEvents(uint64_t sampleRate) {
-    EVENTS.clear();
+    EVENTS_MELODY.clear();
+    EVENTS_BASS.clear();
 
-    for (const auto& note : NOTES) {
-        EVENTS.push_back({ { CppSynth::EventType::KEY_ON, note.pitch }, static_cast<uint64_t>(note.startSec * sampleRate) });
-        EVENTS.push_back({ { CppSynth::EventType::KEY_OFF, note.pitch }, static_cast<uint64_t>((note.startSec + note.durationSec) * sampleRate) });
+    for (const auto& note : MELODY) {
+        EVENTS_MELODY.push_back({ { CppSynth::EventType::KEY_ON, note.pitch }, static_cast<uint64_t>(note.startSec * sampleRate) });
+        EVENTS_MELODY.push_back({ { CppSynth::EventType::KEY_OFF, note.pitch }, static_cast<uint64_t>((note.startSec + note.durationSec) * sampleRate) });
+    }
+
+    for (const auto& note : BASS) {
+        EVENTS_BASS.push_back({ { CppSynth::EventType::KEY_ON, note.pitch }, static_cast<uint64_t>(note.startSec * sampleRate) });
+        EVENTS_BASS.push_back({ { CppSynth::EventType::KEY_OFF, note.pitch }, static_cast<uint64_t>((note.startSec + note.durationSec) * sampleRate) });
     }
 }
 
@@ -78,17 +86,24 @@ static void fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples, cons
     CppSynth::ABuffer buffer(audioSettings.AudioBufferSize);
     memset(buffer.Data(), SAMPLE_EQUILIBRIUM, audioSettings.AudioBufferSize * sizeof(Sample));
 
-    for (const auto& tevent : EVENTS) {
+    for (const auto& tevent : EVENTS_MELODY) {
         if (bufferStartTimeSamples <= tevent.TimeSamples && tevent.TimeSamples < bufferStartTimeSamples + audioSettings.AudioBufferSize) {
             synth.onEvent(tevent);
         }
     }
 
+    for (const auto& tevent : EVENTS_BASS) {
+        if (bufferStartTimeSamples <= tevent.TimeSamples && tevent.TimeSamples < bufferStartTimeSamples + audioSettings.AudioBufferSize) {
+            bassSynth.onEvent(tevent);
+        }
+    }
+
     synth.fillAudioBuffer(buffer, bufferStartTimeSamples, audioSettings);
+    bassSynth.fillAudioBuffer(buffer, bufferStartTimeSamples, audioSettings);
 
     alBufferData(bufferID, AUDIO_FORMAT, buffer.Data(), static_cast<ALsizei>(audioSettings.AudioBufferSize * sizeof(Sample)), static_cast<ALsizei>(audioSettings.SampleRate));
     
-    std::cout << ((std::chrono::steady_clock::now() - t).count() * 0.001 * 0.001) << "us\n";
+    std::cout << "Buffer Fill Time: " << ((std::chrono::steady_clock::now() - t).count() * 0.001 * 0.001) << "ms\n";
 }
 
 void CppSynth::AudioSystem::SetTimeSamples(uint64_t timeSamples) noexcept
@@ -123,7 +138,8 @@ void CppSynth::AudioSystem::Play() noexcept
     alSourcePlay(m_Source);
     m_Playing = true;
 
-    double duration = NOTES.crbegin()->startSec + NOTES.crbegin()->durationSec + 1; // Duration in seconds
+    //double duration = NOTES.crbegin()->startSec + NOTES.crbegin()->durationSec + 1; // Duration in seconds
+    double duration = std::max(MELODY.crbegin()->startSec + MELODY.crbegin()->durationSec, BASS.crbegin()->startSec + BASS.crbegin()->durationSec) + 1;
     long double amplitude = 0.3;
 
     m_AudioPlayerThread = std::make_unique<std::thread>([this, duration]() {
