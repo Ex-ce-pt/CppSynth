@@ -7,6 +7,7 @@
 #include <atomic>
 #include <memory>
 #include <thread>
+#include <unordered_map>
 
 namespace CppSynth {
 
@@ -24,6 +25,11 @@ namespace CppSynth {
 		Event Event;
 		uint64_t TimeSamples;
 	};
+
+	// FWD DECL
+	namespace Instruments {
+		class Instrument;
+	}
 
 	class AudioSystem final
 	{
@@ -57,6 +63,7 @@ namespace CppSynth {
 		void SetTimeSamples(uint64_t timeSamples) noexcept;
 		void SetTimeSeconds(double timeSeconds) noexcept;
 		void SetTimeChangeCallback(TimeChangeCallback cb) noexcept;
+		void SetTracks(const std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>>& tracks) noexcept; // NOTE: don't copy?
 		void Play() noexcept;
 		void Pause() noexcept;
 		void JoinPlayerThread() noexcept;
@@ -77,6 +84,7 @@ namespace CppSynth {
 		uint64_t m_TimeSamples = 0;
 		std::unique_ptr<std::thread> m_AudioPlayerThread;
 		TimeChangeCallback m_TimeChangeCallback = nullptr;
+		std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>> m_Tracks;
 	};
 
 }

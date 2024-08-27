@@ -80,13 +80,13 @@ static void transformNotesIntoEvents(uint64_t sampleRate) {
 
 ////////
 
-static void fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples, const CppSynth::AudioSystem::AudioSystemSettings& audioSettings) {
+static void fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples, const CppSynth::AudioSystem::AudioSystemSettings& audioSettings, const auto& tracks) {
     auto t = std::chrono::steady_clock::now();
     
     CppSynth::ABuffer buffer(audioSettings.AudioBufferSize);
     memset(buffer.Data(), SAMPLE_EQUILIBRIUM, audioSettings.AudioBufferSize * sizeof(Sample));
 
-    for (const auto& tevent : EVENTS_MELODY) {
+    /*for (const auto& tevent : EVENTS_MELODY) {
         if (bufferStartTimeSamples <= tevent.TimeSamples && tevent.TimeSamples < bufferStartTimeSamples + audioSettings.AudioBufferSize) {
             synth.onEvent(tevent);
         }
@@ -99,7 +99,17 @@ static void fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples, cons
     }
 
     synth.fillAudioBuffer(buffer, bufferStartTimeSamples, audioSettings);
-    bassSynth.fillAudioBuffer(buffer, bufferStartTimeSamples, audioSettings);
+    bassSynth.fillAudioBuffer(buffer, bufferStartTimeSamples, audioSettings);*/
+
+    for (const auto& [instrument, events] : tracks) {
+        for (const auto& tevent : events) {
+            if (bufferStartTimeSamples <= tevent.TimeSamples && tevent.TimeSamples < bufferStartTimeSamples + audioSettings.AudioBufferSize) {
+                instrument->onEvent(tevent);
+            }
+        }
+
+        instrument->fillAudioBuffer(buffer, bufferStartTimeSamples, audioSettings);
+    }
 
     alBufferData(bufferID, AUDIO_FORMAT, buffer.Data(), static_cast<ALsizei>(audioSettings.AudioBufferSize * sizeof(Sample)), static_cast<ALsizei>(audioSettings.SampleRate));
     
@@ -121,12 +131,22 @@ void CppSynth::AudioSystem::SetTimeChangeCallback(TimeChangeCallback cb) noexcep
     m_TimeChangeCallback = cb;
 }
 
+void CppSynth::AudioSystem::SetTracks(const std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>>& tracks) noexcept
+{
+    m_Tracks = tracks;
+}
+
 void CppSynth::AudioSystem::Play() noexcept
 {
 
     transformNotesIntoEvents(m_Settings.SampleRate);
+    SetTracks({
+        { &synth, EVENTS_MELODY },
+        { &bassSynth, EVENTS_BASS }
+    });
+
     for (size_t i = 0; i < m_Settings.NumberOfAudioBuffers; i++) {
-        fillAudioBuffer(m_AudioBuffers[i], m_TimeSamples, m_Settings);
+        fillAudioBuffer(m_AudioBuffers[i], m_TimeSamples, m_Settings, m_Tracks);
         m_TimeSamples += m_Settings.AudioBufferSize;
     }
 
@@ -158,7 +178,7 @@ void CppSynth::AudioSystem::Play() noexcept
                 ALuint buffer;
                 alSourceUnqueueBuffers(m_Source, 1, &buffer);
 
-                fillAudioBuffer(buffer, m_TimeSamples, m_Settings);
+                fillAudioBuffer(buffer, m_TimeSamples, m_Settings, m_Tracks);
                 m_TimeSamples += m_Settings.AudioBufferSize;
 
                 alSourceQueueBuffers(m_Source, 1, &buffer);
