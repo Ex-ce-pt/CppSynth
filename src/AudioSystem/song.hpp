@@ -1,6 +1,7 @@
 // Warning
 // debug file
-// will be deleted asap
+
+#include "../Instruments/Instrument.hpp"
 
 /*
 std::vector<CppSynth::Instruments::Note> NOTES = {

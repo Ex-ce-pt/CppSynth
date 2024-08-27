@@ -74,6 +74,7 @@ namespace CppSynth {
 
 	private:
 		void FillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples);
+		double GetTracksTotalDuration();
 
 	private:
 		AudioSystemSettings m_Settings;

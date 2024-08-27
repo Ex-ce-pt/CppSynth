@@ -54,32 +54,6 @@ void CppSynth::AudioSystem::Close() noexcept
 	m_Playing = false;
 }
 
-// DEBUG
-
-#include "song.hpp"
-
-std::vector<CppSynth::TimedEvent> EVENTS_MELODY;
-std::vector<CppSynth::TimedEvent> EVENTS_BASS;
-CppSynth::Instruments::SimpleSynth synth(CppSynth::Instruments::SimpleSynth::WaveType::SINE);
-CppSynth::Instruments::SimpleSynth bassSynth(CppSynth::Instruments::SimpleSynth::WaveType::TRIANGLE);
-
-static void transformNotesIntoEvents(uint64_t sampleRate) {
-	EVENTS_MELODY.clear();
-	EVENTS_BASS.clear();
-
-	for (const auto& note : MELODY) {
-		EVENTS_MELODY.push_back({ { CppSynth::EventType::KEY_ON, note.pitch }, static_cast<uint64_t>(note.startSec * sampleRate) });
-		EVENTS_MELODY.push_back({ { CppSynth::EventType::KEY_OFF, note.pitch }, static_cast<uint64_t>((note.startSec + note.durationSec) * sampleRate) });
-	}
-
-	for (const auto& note : BASS) {
-		EVENTS_BASS.push_back({ { CppSynth::EventType::KEY_ON, note.pitch }, static_cast<uint64_t>(note.startSec * sampleRate) });
-		EVENTS_BASS.push_back({ { CppSynth::EventType::KEY_OFF, note.pitch }, static_cast<uint64_t>((note.startSec + note.durationSec) * sampleRate) });
-	}
-}
-
-////////
-
 void CppSynth::AudioSystem::FillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples) {
 	auto t = std::chrono::steady_clock::now();
 
@@ -99,6 +73,17 @@ void CppSynth::AudioSystem::FillAudioBuffer(ALuint bufferID, size_t bufferStartT
 	alBufferData(bufferID, AUDIO_FORMAT, buffer.Data(), static_cast<ALsizei>(m_Settings.AudioBufferSize * sizeof(Sample)), static_cast<ALsizei>(m_Settings.SampleRate));
 
 	std::cout << "Buffer Fill Time: " << ((std::chrono::steady_clock::now() - t).count() * 0.001 * 0.001) << "ms\n";
+}
+
+double CppSynth::AudioSystem::GetTracksTotalDuration()
+{
+	uint64_t maxEventTimeSamples = 0;
+
+	for (const auto& [_, events] : m_Tracks) {
+		maxEventTimeSamples = std::max(maxEventTimeSamples, events.crbegin()->TimeSamples);
+	}
+
+	return maxEventTimeSamples / static_cast<double>(m_Settings.SampleRate) + 1;
 }
 
 void CppSynth::AudioSystem::SetTimeSamples(uint64_t timeSamples) noexcept
@@ -124,12 +109,6 @@ void CppSynth::AudioSystem::SetTracks(const std::unordered_map<Instruments::Inst
 void CppSynth::AudioSystem::Play() noexcept
 {
 
-	transformNotesIntoEvents(m_Settings.SampleRate);
-	SetTracks({
-		{ &synth, EVENTS_MELODY },
-		{ &bassSynth, EVENTS_BASS }
-		});
-
 	for (size_t i = 0; i < m_Settings.NumberOfAudioBuffers; i++) {
 		FillAudioBuffer(m_AudioBuffers[i], m_TimeSamples);
 		m_TimeSamples += m_Settings.AudioBufferSize;
@@ -144,7 +123,8 @@ void CppSynth::AudioSystem::Play() noexcept
 	m_Playing = true;
 
 	//double duration = NOTES.crbegin()->startSec + NOTES.crbegin()->durationSec + 1; // Duration in seconds
-	double duration = std::max(MELODY.crbegin()->startSec + MELODY.crbegin()->durationSec, BASS.crbegin()->startSec + BASS.crbegin()->durationSec) + 1;
+	
+	double duration = GetTracksTotalDuration();
 	long double amplitude = 0.3;
 
 	m_AudioPlayerThread = std::make_unique<std::thread>([this, duration]() {
