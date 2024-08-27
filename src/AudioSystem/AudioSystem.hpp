@@ -73,6 +73,9 @@ namespace CppSynth {
 		double GetTimeSeconds() noexcept;
 
 	private:
+		void FillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples);
+
+	private:
 		AudioSystemSettings m_Settings;
 		ALCdevice* m_CurrentDevice = nullptr;
 		ALCcontext* m_CurrentContext = nullptr;
