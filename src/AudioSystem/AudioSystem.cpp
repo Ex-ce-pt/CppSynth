@@ -73,6 +73,8 @@ static void transformNotesIntoEvents(uint64_t sampleRate) {
 ////////
 
 static void fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples, const CppSynth::AudioSystem::AudioSystemSettings& audioSettings) {
+    auto t = std::chrono::steady_clock::now();
+    
     CppSynth::ABuffer buffer(audioSettings.AudioBufferSize);
     memset(buffer.Data(), SAMPLE_EQUILIBRIUM, audioSettings.AudioBufferSize * sizeof(Sample));
 
@@ -85,6 +87,8 @@ static void fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples, cons
     synth.fillAudioBuffer(buffer, bufferStartTimeSamples, audioSettings);
 
     alBufferData(bufferID, AUDIO_FORMAT, buffer.Data(), static_cast<ALsizei>(audioSettings.AudioBufferSize * sizeof(Sample)), static_cast<ALsizei>(audioSettings.SampleRate));
+    
+    std::cout << ((std::chrono::steady_clock::now() - t).count() * 0.001 * 0.001) << "us\n";
 }
 
 void CppSynth::AudioSystem::SetTimeSamples(uint64_t timeSamples) noexcept
