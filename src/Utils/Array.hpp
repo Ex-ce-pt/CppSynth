@@ -10,36 +10,36 @@ namespace CppSynth {
 	/// Helper class that uses RAII to manage a heap-allocated array.
 	/// </summary>
 	template<typename T>
-	class Buffer {
+	class Array {
 	public:
 		// The proper type that the Buffer uses.
 		// Can't think of a reason to remove const and pointers.
 		using Type = std::remove_reference_t<T>;
 
-		constexpr Buffer(size_t size = 0)
+		constexpr Array(size_t size = 0)
 			: m_Size(size), m_Data(new Type[size])
 		{ }
 
-		constexpr Buffer(const Buffer& other)
+		constexpr Array(const Array& other)
 		{
 			m_Size = other.m_Size;
 			m_Data = new T[other.m_Size];
 			memcpy(m_Data, other.m_Data, other.m_Size * sizeof(T));
 		}
 
-		constexpr Buffer(const Buffer&& other)
+		constexpr Array(const Array&& other)
 		{
 			m_Size = other.m_Size;
 			m_Data = other.m_Data;
 			other.m_Data = nullptr;
 		}
 
-		constexpr ~Buffer()
+		constexpr ~Array()
 		{
 			delete[] m_Data;
 		}
 
-		constexpr Buffer& operator=(const Buffer& other) noexcept
+		constexpr Array& operator=(const Array& other) noexcept
 		{
 			m_Size = other.m_Size;
 			m_Data = new T[other.m_Size];
@@ -47,7 +47,7 @@ namespace CppSynth {
 			return *this;
 		}
 
-		constexpr Buffer& operator=(const Buffer&& other) noexcept
+		constexpr Array& operator=(const Array&& other) noexcept
 		{
 			m_Size = other.m_Size;
 			m_Data = other.m_Data;
@@ -68,9 +68,9 @@ namespace CppSynth {
 	};
 
 	/// <summary>
-	/// A buffer of samples. "A" stands for "Audio.
+	/// A buffer of samples. "A" stands for "Audio".
 	/// </summary>
-	using ABuffer = Buffer<Sample>;
+	using ABuffer = Array<Sample>;
 
 }
 

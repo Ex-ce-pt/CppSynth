@@ -2,8 +2,8 @@
 #define CPPSYNTH_INSTRUMENTS_INSTRUMENT_HPP
 
 #include "../AudioSystem/Sample.hpp"
-#include "../AudioSystem/Buffer.hpp"
 #include "../AudioSystem/AudioSystem.hpp"
+#include "../Utils/Array.hpp"
 #include <vector>
 
 namespace CppSynth::Instruments {

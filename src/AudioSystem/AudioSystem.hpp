@@ -1,7 +1,7 @@
 #ifndef CPPSYNTH_AUDIOSYSTEM_AUDIOSYSTEM_HPP
 #define CPPSYNTH_AUDIOSYSTEM_AUDIOSYSTEM_HPP
 
-#include "Buffer.hpp"
+#include "../Utils/Array.hpp"
 #include <AL/al.h>
 #include <AL/alc.h>
 #include <atomic>
@@ -83,7 +83,7 @@ namespace CppSynth {
 		ALCdevice* m_CurrentDevice = nullptr;
 		ALCcontext* m_CurrentContext = nullptr;
 		ALuint m_Source = 0;
-		Buffer<ALuint> m_AudioBuffers;
+		Array<ALuint> m_AudioBuffers;
 
 		bool m_Initialized = false;
 		std::atomic_bool m_Playing = false;
