@@ -70,9 +70,10 @@ namespace CppSynth {
 		void pause() noexcept;
 		void joinPlayerThread() noexcept;
 
-		inline bool isPlaying() noexcept;
-		inline uint64_t getTimeSamples() noexcept;
+		bool isPlaying() noexcept;
+		uint64_t getTimeSamples() noexcept;
 		double getTimeSeconds() noexcept;
+		double getIdealLatencySeconds() noexcept;
 
 	private:
 		void fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples);

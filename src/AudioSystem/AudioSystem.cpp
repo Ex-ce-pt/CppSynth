@@ -171,12 +171,12 @@ void CppSynth::AudioSystem::joinPlayerThread() noexcept
 	m_AudioPlayerThread->join();
 }
 
-inline bool CppSynth::AudioSystem::isPlaying() noexcept
+bool CppSynth::AudioSystem::isPlaying() noexcept
 {
 	return m_Playing;
 }
 
-inline uint64_t CppSynth::AudioSystem::getTimeSamples() noexcept
+uint64_t CppSynth::AudioSystem::getTimeSamples() noexcept
 {
 	return m_TimeSamples;
 }
@@ -184,4 +184,9 @@ inline uint64_t CppSynth::AudioSystem::getTimeSamples() noexcept
 double CppSynth::AudioSystem::getTimeSeconds() noexcept
 {
 	return m_TimeSamples / static_cast<double>(m_Settings.sampleRate);
+}
+
+double CppSynth::AudioSystem::getIdealLatencySeconds() noexcept
+{
+	return m_Settings.numberOfAudioBuffers * m_Settings.audioBufferSize / m_Settings.sampleRate;
 }
