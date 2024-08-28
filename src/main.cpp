@@ -2,7 +2,7 @@
 
 #include <cstdio>
 
-#include "AudioSystem/song.hpp"
+#include "song.hpp"
 #include "Instruments/SimpleSynth.hpp"
 
 std::vector<CppSynth::TimedEvent> EVENTS_MELODY;

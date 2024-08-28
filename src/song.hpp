@@ -1,7 +1,7 @@
 // Warning
 // debug file
 
-#include "../Instruments/Instrument.hpp"
+#include "Instruments/Instrument.hpp"
 
 /*
 std::vector<CppSynth::Instruments::Note> NOTES = {
