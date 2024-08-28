@@ -52,11 +52,11 @@ void CppSynth::Instruments::SimpleSynth::fillAudioBuffer(ABuffer& buffer, uint64
     if (m_Generator == nullptr) return;
 
     for (const TimedEvent& tevent : m_CurrentEvents) {
-        if (tevent.Event.Type == EventType::KEY_OFF) continue;
+        if (tevent.event.type == EventType::KEY_OFF) continue;
 
         // If positive, indicates a phase of the signal about to be generated.
         // If negative, indicates that the event starts somewhere in the middle of the buffer.
-        int64_t timeBetweenEventAndBufferStartSamples = static_cast<int64_t>(bufferStartTimeSamples - tevent.TimeSamples);
+        int64_t timeBetweenEventAndBufferStartSamples = static_cast<int64_t>(bufferStartTimeSamples - tevent.timeSamples);
         uint64_t phaseSample = timeBetweenEventAndBufferStartSamples;
         size_t bufferOffset = 0;
 
@@ -69,7 +69,7 @@ void CppSynth::Instruments::SimpleSynth::fillAudioBuffer(ABuffer& buffer, uint64
         ABuffer noteDataBuffer(buffer.Size() - bufferOffset);
 
         // TODO: make abstract
-        m_Generator(noteDataBuffer, 0.3, A4 * pow(2, tevent.Event.Pitch / 12.0), audioSettings.SampleRate, phaseSample);
+        m_Generator(noteDataBuffer, 0.3, A4 * pow(2, tevent.event.pitch / 12.0), audioSettings.sampleRate, phaseSample);
 
         // Merge the resulting buffer with the rest of the audio
         for (size_t i = 0; i < noteDataBuffer.Size(); i++) {

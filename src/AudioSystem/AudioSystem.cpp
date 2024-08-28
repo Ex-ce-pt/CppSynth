@@ -8,17 +8,17 @@
 #include <iostream>
 
 CppSynth::AudioSystem::AudioSystem(const AudioSystemSettings& settings)
-	: m_Settings(settings), m_AudioBuffers(settings.NumberOfAudioBuffers)
+	: m_Settings(settings), m_AudioBuffers(settings.numberOfAudioBuffers)
 { }
 
 CppSynth::AudioSystem::~AudioSystem()
 {
 	if (!m_Initialized) return;
 
-	Close();
+	close();
 }
 
-CppSynth::AudioSystem::AudioSystemStatus CppSynth::AudioSystem::Init() noexcept
+CppSynth::AudioSystem::AudioSystemStatus CppSynth::AudioSystem::init() noexcept
 {
 	// Open default device
 	m_CurrentDevice = alcOpenDevice(NULL);
@@ -34,7 +34,7 @@ CppSynth::AudioSystem::AudioSystemStatus CppSynth::AudioSystem::Init() noexcept
 		return AudioSystemStatus::FAILED_TO_CREATE_CONTEXT;
 	}
 
-	alGenBuffers(static_cast<ALsizei>(m_Settings.NumberOfAudioBuffers), m_AudioBuffers.Data());
+	alGenBuffers(static_cast<ALsizei>(m_Settings.numberOfAudioBuffers), m_AudioBuffers.Data());
 	alGenSources(1, &m_Source);
 
 	m_Initialized = true;
@@ -42,12 +42,12 @@ CppSynth::AudioSystem::AudioSystemStatus CppSynth::AudioSystem::Init() noexcept
 	return AudioSystemStatus::SUCCESS;
 }
 
-void CppSynth::AudioSystem::Close() noexcept
+void CppSynth::AudioSystem::close() noexcept
 {
 	if (!m_Initialized) return;
 
 	alDeleteSources(1, &m_Source);
-	alDeleteBuffers(static_cast<ALsizei>(m_Settings.NumberOfAudioBuffers), m_AudioBuffers.Data());
+	alDeleteBuffers(static_cast<ALsizei>(m_Settings.numberOfAudioBuffers), m_AudioBuffers.Data());
 	alcMakeContextCurrent(NULL);
 	alcDestroyContext(m_CurrentContext);
 	alcCloseDevice(m_CurrentDevice);
@@ -56,46 +56,45 @@ void CppSynth::AudioSystem::Close() noexcept
 	m_Playing = false;
 }
 
-void CppSynth::AudioSystem::SetTimeSamples(uint64_t timeSamples) noexcept
+void CppSynth::AudioSystem::setTimeSamples(uint64_t timeSamples) noexcept
 {
 	m_TimeSamples = timeSamples;
 }
 
-void CppSynth::AudioSystem::SetTimeSeconds(double timeSeconds) noexcept
+void CppSynth::AudioSystem::setTimeSeconds(double timeSeconds) noexcept
 {
-	m_TimeSamples = timeSeconds * m_Settings.SampleRate;
+	m_TimeSamples = timeSeconds * m_Settings.sampleRate;
 }
 
-void CppSynth::AudioSystem::SetTimeChangeCallback(TimeChangeCallback cb) noexcept
+void CppSynth::AudioSystem::setTimeChangeCallback(TimeChangeCallback cb) noexcept
 {
 	m_TimeChangeCallback = cb;
 }
 
-void CppSynth::AudioSystem::SetTracks(const std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>>& tracks) noexcept
+void CppSynth::AudioSystem::setTracks(const std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>>& tracks) noexcept
 {
 	m_Tracks = tracks;
 }
 
-void CppSynth::AudioSystem::Play() noexcept
+void CppSynth::AudioSystem::play() noexcept
 {
 
-	for (size_t i = 0; i < m_Settings.NumberOfAudioBuffers; i++) {
-		FillAudioBuffer(m_AudioBuffers[i], m_TimeSamples);
-		m_TimeSamples += m_Settings.AudioBufferSize;
+	for (size_t i = 0; i < m_Settings.numberOfAudioBuffers; i++) {
+		fillAudioBuffer(m_AudioBuffers[i], m_TimeSamples);
+		m_TimeSamples += m_Settings.audioBufferSize;
 	}
 
-	alSourceQueueBuffers(m_Source, static_cast<ALsizei>(m_Settings.NumberOfAudioBuffers), m_AudioBuffers.Data());
+	alSourceQueueBuffers(m_Source, static_cast<ALsizei>(m_Settings.numberOfAudioBuffers), m_AudioBuffers.Data());
 
+	// Arbitrary sleep time to let the audio buffers initialize fully, to be deleted
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 
 	// Start streaming
 	alSourcePlay(m_Source);
 	m_Playing = true;
 
-	long double amplitude = 0.3;
-
 	m_AudioPlayerThread = std::make_unique<std::thread>([this]() {
-		double durationSamples = GetTracksTotalDurationSamples();
+		double durationSamples = getTracksTotalDurationSamples();
 
 		// Wait for the sound to finish playing
 		ALint state;
@@ -112,14 +111,15 @@ void CppSynth::AudioSystem::Play() noexcept
 				ALuint buffer;
 				alSourceUnqueueBuffers(m_Source, 1, &buffer);
 
-				FillAudioBuffer(buffer, m_TimeSamples);
-				m_TimeSamples += m_Settings.AudioBufferSize;
+				fillAudioBuffer(buffer, m_TimeSamples);
+				m_TimeSamples += m_Settings.audioBufferSize;
 
 				alSourceQueueBuffers(m_Source, 1, &buffer);
 
 				if (m_TimeChangeCallback) m_TimeChangeCallback(m_TimeSamples);
 			}
 
+			// NOTE: Arbitrary sleep time to lower the CPU usage, to be deleted
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
 		} while (state == AL_PLAYING && m_Playing);
@@ -127,15 +127,15 @@ void CppSynth::AudioSystem::Play() noexcept
 	});
 }
 
-void CppSynth::AudioSystem::FillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples) {
+void CppSynth::AudioSystem::fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples) {
 	auto t = std::chrono::steady_clock::now();
 
-	CppSynth::ABuffer buffer(m_Settings.AudioBufferSize);
-	memset(buffer.Data(), SAMPLE_EQUILIBRIUM, m_Settings.AudioBufferSize * sizeof(Sample));
+	CppSynth::ABuffer buffer(m_Settings.audioBufferSize);
+	memset(buffer.Data(), SAMPLE_EQUILIBRIUM, m_Settings.audioBufferSize * sizeof(Sample));
 
 	for (const auto& [instrument, events] : m_Tracks) {
 		for (const auto& tevent : events) {
-			if (bufferStartTimeSamples <= tevent.TimeSamples && tevent.TimeSamples < bufferStartTimeSamples + m_Settings.AudioBufferSize) {
+			if (bufferStartTimeSamples <= tevent.timeSamples && tevent.timeSamples < bufferStartTimeSamples + m_Settings.audioBufferSize) {
 				instrument->onEvent(tevent);
 			}
 		}
@@ -143,45 +143,45 @@ void CppSynth::AudioSystem::FillAudioBuffer(ALuint bufferID, size_t bufferStartT
 		instrument->fillAudioBuffer(buffer, bufferStartTimeSamples, m_Settings);
 	}
 
-	alBufferData(bufferID, AUDIO_FORMAT, buffer.Data(), static_cast<ALsizei>(m_Settings.AudioBufferSize * sizeof(Sample)), static_cast<ALsizei>(m_Settings.SampleRate));
+	alBufferData(bufferID, AUDIO_FORMAT, buffer.Data(), static_cast<ALsizei>(m_Settings.audioBufferSize * sizeof(Sample)), static_cast<ALsizei>(m_Settings.sampleRate));
 
 	std::cout << "Buffer Fill Time: " << ((std::chrono::steady_clock::now() - t).count() * 0.001 * 0.001) << "ms\n";
 }
 
-uint64_t CppSynth::AudioSystem::GetTracksTotalDurationSamples()
+uint64_t CppSynth::AudioSystem::getTracksTotalDurationSamples()
 {
 	uint64_t maxEventTimeSamples = 0;
 
 	for (const auto& [_, events] : m_Tracks) {
-		maxEventTimeSamples = std::max_element(std::execution::par, events.begin(), events.end(), [](const auto& lhs, const auto& rhs) { return lhs.TimeSamples < rhs.TimeSamples; })->TimeSamples;
+		maxEventTimeSamples = std::max_element(std::execution::par, events.begin(), events.end(), [](const TimedEvent& lhs, const TimedEvent& rhs) { return lhs.timeSamples < rhs.timeSamples; })->timeSamples;
 	}
 
-	return maxEventTimeSamples + m_Settings.PaddingAfterSongEndSeconds * m_Settings.SampleRate;
+	return maxEventTimeSamples + m_Settings.paddingAfterSongEndSeconds * m_Settings.sampleRate;
 }
 
-void CppSynth::AudioSystem::Pause() noexcept
+void CppSynth::AudioSystem::pause() noexcept
 {
 	m_Playing = false;
 }
 
-void CppSynth::AudioSystem::JoinPlayerThread() noexcept
+void CppSynth::AudioSystem::joinPlayerThread() noexcept
 {
 	if (!m_AudioPlayerThread) return;
 
 	m_AudioPlayerThread->join();
 }
 
-inline bool CppSynth::AudioSystem::IsPlaying() noexcept
+inline bool CppSynth::AudioSystem::isPlaying() noexcept
 {
 	return m_Playing;
 }
 
-inline uint64_t CppSynth::AudioSystem::GetTimeSamples() noexcept
+inline uint64_t CppSynth::AudioSystem::getTimeSamples() noexcept
 {
 	return m_TimeSamples;
 }
 
-double CppSynth::AudioSystem::GetTimeSeconds() noexcept
+double CppSynth::AudioSystem::getTimeSeconds() noexcept
 {
-	return m_TimeSamples / static_cast<double>(m_Settings.SampleRate);
+	return m_TimeSamples / static_cast<double>(m_Settings.sampleRate);
 }

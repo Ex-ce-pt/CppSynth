@@ -17,13 +17,13 @@ namespace CppSynth {
 	};
 
 	struct Event {
-		EventType Type;
-		double Pitch;
+		EventType type;
+		double pitch;
 	};
 
 	struct TimedEvent {
-		Event Event;
-		uint64_t TimeSamples;
+		Event event;
+		uint64_t timeSamples;
 	};
 
 	// FWD DECL
@@ -40,11 +40,11 @@ namespace CppSynth {
 		static inline constexpr double DEFAULT_PADDING_AFTER_SONG_END_SECONDS = 1;
 
 		struct AudioSystemSettings {
-			uint64_t SampleRate = DEFAULT_SAMPLE_RATE;
-			bool Stereo = false;
-			size_t NumberOfAudioBuffers = DEFAULT_NUMBER_OF_AUDIO_BUFFERS;
-			size_t AudioBufferSize = DEFAULT_AUDIO_BUFFER_SIZE;
-			double PaddingAfterSongEndSeconds = DEFAULT_PADDING_AFTER_SONG_END_SECONDS;
+			uint64_t sampleRate = DEFAULT_SAMPLE_RATE;
+			bool stereo = false;
+			size_t numberOfAudioBuffers = DEFAULT_NUMBER_OF_AUDIO_BUFFERS;
+			size_t audioBufferSize = DEFAULT_AUDIO_BUFFER_SIZE;
+			double paddingAfterSongEndSeconds = DEFAULT_PADDING_AFTER_SONG_END_SECONDS;
 		};
 
 		enum class AudioSystemStatus {
@@ -59,24 +59,24 @@ namespace CppSynth {
 		AudioSystem(const AudioSystemSettings& settings = {});
 		~AudioSystem();
 
-		AudioSystemStatus Init() noexcept;
-		void Close() noexcept;
+		AudioSystemStatus init() noexcept;
+		void close() noexcept;
 
-		void SetTimeSamples(uint64_t timeSamples) noexcept;
-		void SetTimeSeconds(double timeSeconds) noexcept;
-		void SetTimeChangeCallback(TimeChangeCallback cb) noexcept;
-		void SetTracks(const std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>>& tracks) noexcept; // NOTE: don't copy?
-		void Play() noexcept;
-		void Pause() noexcept;
-		void JoinPlayerThread() noexcept;
+		void setTimeSamples(uint64_t timeSamples) noexcept;
+		void setTimeSeconds(double timeSeconds) noexcept;
+		void setTimeChangeCallback(TimeChangeCallback cb) noexcept;
+		void setTracks(const std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>>& tracks) noexcept; // NOTE: don't copy?
+		void play() noexcept;
+		void pause() noexcept;
+		void joinPlayerThread() noexcept;
 
-		inline bool IsPlaying() noexcept;
-		inline uint64_t GetTimeSamples() noexcept;
-		double GetTimeSeconds() noexcept;
+		inline bool isPlaying() noexcept;
+		inline uint64_t getTimeSamples() noexcept;
+		double getTimeSeconds() noexcept;
 
 	private:
-		void FillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples);
-		uint64_t GetTracksTotalDurationSamples();
+		void fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples);
+		uint64_t getTracksTotalDurationSamples();
 
 	private:
 		AudioSystemSettings m_Settings;
@@ -87,7 +87,7 @@ namespace CppSynth {
 
 		bool m_Initialized = false;
 		std::atomic_bool m_Playing = false;
-		uint64_t m_TimeSamples = 0;
+		std::atomic_uint64_t m_TimeSamples = 0;
 		std::unique_ptr<std::thread> m_AudioPlayerThread;
 		TimeChangeCallback m_TimeChangeCallback = nullptr;
 		std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>> m_Tracks;

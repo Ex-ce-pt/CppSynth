@@ -8,7 +8,7 @@
 std::vector<CppSynth::TimedEvent> EVENTS_MELODY;
 std::vector<CppSynth::TimedEvent> EVENTS_BASS;
 std::unordered_map<CppSynth::Instruments::Instrument*, std::vector<CppSynth::TimedEvent>> tracks;
-CppSynth::Instruments::SimpleSynth synth(CppSynth::Instruments::SimpleSynth::WaveType::SINE);
+CppSynth::Instruments::SimpleSynth leadSynth(CppSynth::Instruments::SimpleSynth::WaveType::SINE);
 CppSynth::Instruments::SimpleSynth bassSynth(CppSynth::Instruments::SimpleSynth::WaveType::TRIANGLE);
 
 void prepareTest(uint32_t sampleRate) {
@@ -26,7 +26,7 @@ void prepareTest(uint32_t sampleRate) {
     }
 
     tracks = {
-        { &synth, EVENTS_MELODY },
+        { &leadSynth, EVENTS_MELODY },
         { &bassSynth, EVENTS_BASS }
     };
 }
@@ -38,7 +38,7 @@ int main() {
 
     // Initialize OpenAL
     CppSynth::AudioSystem audioSystem;
-    auto status = audioSystem.Init();
+    auto status = audioSystem.init();
     switch (status) {
         case CppSynth::AudioSystem::AudioSystemStatus::SUCCESS:
             printf("Audio System Initialized\n");
@@ -57,14 +57,14 @@ int main() {
             return -10;
     }
     
-    audioSystem.SetTimeSeconds(0);
-    audioSystem.SetTracks(tracks);
-    audioSystem.Play();
-    audioSystem.JoinPlayerThread();
+    audioSystem.setTimeSeconds(0);
+    audioSystem.setTracks(tracks);
+    audioSystem.play();
+    audioSystem.joinPlayerThread();
 
     printf("Finished playing\n");
     printf("Closing the Audio System...\n");
-    audioSystem.Close();
+    audioSystem.close();
 
     return 0;
 }
