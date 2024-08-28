@@ -5,9 +5,11 @@
 #include "song.hpp"
 #include "Instruments/SimpleSynth.hpp"
 
+#include <memory>
+
 std::vector<CppSynth::TimedEvent> EVENTS_MELODY;
 std::vector<CppSynth::TimedEvent> EVENTS_BASS;
-std::unordered_map<CppSynth::Instruments::Instrument*, std::vector<CppSynth::TimedEvent>> tracks;
+std::shared_ptr<std::unordered_map<CppSynth::Instruments::Instrument*, std::vector<CppSynth::TimedEvent>>> tracks;
 CppSynth::Instruments::SimpleSynth leadSynth(CppSynth::Instruments::SimpleSynth::WaveType::SINE);
 CppSynth::Instruments::SimpleSynth bassSynth(CppSynth::Instruments::SimpleSynth::WaveType::TRIANGLE);
 
@@ -25,10 +27,10 @@ void prepareTest(uint32_t sampleRate) {
         EVENTS_BASS.push_back({ { CppSynth::EventType::KEY_OFF, note.pitch }, static_cast<uint64_t>((note.startSec + note.durationSec) * sampleRate) });
     }
 
-    tracks = {
+    tracks = std::make_shared<std::unordered_map<CppSynth::Instruments::Instrument*, std::vector<CppSynth::TimedEvent>>>(std::unordered_map<CppSynth::Instruments::Instrument*, std::vector<CppSynth::TimedEvent>>({
         { &leadSynth, EVENTS_MELODY },
         { &bassSynth, EVENTS_BASS }
-    };
+    }));
 }
 
 int main() {

@@ -65,7 +65,7 @@ namespace CppSynth {
 		void setTimeSamples(uint64_t timeSamples) noexcept;
 		void setTimeSeconds(double timeSeconds) noexcept;
 		void setTimeChangeCallback(TimeChangeCallback cb) noexcept;
-		void setTracks(const std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>>& tracks) noexcept; // NOTE: don't copy?
+		void setTracks(std::weak_ptr<std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>>> tracks) noexcept;
 		void play() noexcept;
 		void pause() noexcept;
 		void joinPlayerThread() noexcept;
@@ -91,7 +91,7 @@ namespace CppSynth {
 		std::atomic_uint64_t m_TimeSamples = 0;
 		std::unique_ptr<std::thread> m_AudioPlayerThread;
 		TimeChangeCallback m_TimeChangeCallback = nullptr;
-		std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>> m_Tracks;
+		std::weak_ptr<std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>>> m_Tracks;
 	};
 
 }

@@ -71,7 +71,7 @@ void CppSynth::AudioSystem::setTimeChangeCallback(TimeChangeCallback cb) noexcep
 	m_TimeChangeCallback = cb;
 }
 
-void CppSynth::AudioSystem::setTracks(const std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>>& tracks) noexcept
+void CppSynth::AudioSystem::setTracks(std::weak_ptr<std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>>> tracks) noexcept
 {
 	m_Tracks = tracks;
 }
@@ -124,7 +124,7 @@ void CppSynth::AudioSystem::play() noexcept
 
 		} while (state == AL_PLAYING && m_Playing);
 		m_Playing = false;
-	});
+		});
 }
 
 void CppSynth::AudioSystem::fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples) {
@@ -133,14 +133,16 @@ void CppSynth::AudioSystem::fillAudioBuffer(ALuint bufferID, size_t bufferStartT
 	CppSynth::ABuffer buffer(m_Settings.audioBufferSize);
 	memset(buffer.Data(), SAMPLE_EQUILIBRIUM, m_Settings.audioBufferSize * sizeof(Sample));
 
-	for (const auto& [instrument, events] : m_Tracks) {
-		for (const auto& tevent : events) {
-			if (bufferStartTimeSamples <= tevent.timeSamples && tevent.timeSamples < bufferStartTimeSamples + m_Settings.audioBufferSize) {
-				instrument->onEvent(tevent);
+	if (!m_Tracks.expired()) {
+		for (const auto& [instrument, events] : *m_Tracks.lock()) {
+			for (const auto& tevent : events) {
+				if (bufferStartTimeSamples <= tevent.timeSamples && tevent.timeSamples < bufferStartTimeSamples + m_Settings.audioBufferSize) {
+					instrument->onEvent(tevent);
+				}
 			}
-		}
 
-		instrument->fillAudioBuffer(buffer, bufferStartTimeSamples, m_Settings);
+			instrument->fillAudioBuffer(buffer, bufferStartTimeSamples, m_Settings);
+		}
 	}
 
 	alBufferData(bufferID, AUDIO_FORMAT, buffer.Data(), static_cast<ALsizei>(m_Settings.audioBufferSize * sizeof(Sample)), static_cast<ALsizei>(m_Settings.sampleRate));
@@ -152,8 +154,10 @@ uint64_t CppSynth::AudioSystem::getTracksTotalDurationSamples()
 {
 	uint64_t maxEventTimeSamples = 0;
 
-	for (const auto& [_, events] : m_Tracks) {
-		maxEventTimeSamples = std::max_element(std::execution::par, events.begin(), events.end(), [](const TimedEvent& lhs, const TimedEvent& rhs) { return lhs.timeSamples < rhs.timeSamples; })->timeSamples;
+	if (!m_Tracks.expired()) {
+		for (const auto& [_, events] : *m_Tracks.lock()) {
+			maxEventTimeSamples = std::max_element(std::execution::par, events.begin(), events.end(), [](const TimedEvent& lhs, const TimedEvent& rhs) { return lhs.timeSamples < rhs.timeSamples; })->timeSamples;
+		}
 	}
 
 	return maxEventTimeSamples + m_Settings.paddingAfterSongEndSeconds * m_Settings.sampleRate;
