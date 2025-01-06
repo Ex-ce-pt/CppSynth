@@ -3,8 +3,14 @@
 
 #include "Instruments/Instrument.hpp"
 
+struct Note {
+    double startSec;
+    double durationSec;
+    double pitch;
+};
+
 /*
-std::vector<CppSynth::Instruments::Note> NOTES = {
+std::vector<Note> NOTES = {
     { 0.0, 0.5, 0.0 },
     { 1.0, 0.5, 0.0 },
     { 1.5, 0.25, -2.0 },
@@ -43,7 +49,7 @@ std::vector<CppSynth::Instruments::Note> NOTES = {
 */
 
 // MEGALOVANIA
-std::vector<CppSynth::Instruments::Note> MELODY = {
+std::vector<Note> MELODY = {
     { 0 + 0.0, 0.24,  -12 + 5.0 },
     { 0 + 0.25, 0.24, -12 + 5.0 },
     { 0 + 0.5, 0.24,  -12 + 17.0 },
@@ -89,7 +95,7 @@ std::vector<CppSynth::Instruments::Note> MELODY = {
     { 12 + 3.75, 0.25, -12 + 10.0 },
 };
 
-std::vector<CppSynth::Instruments::Note> BASS = {
+std::vector<Note> BASS = {
     { 0.0, 0.49, -12.0 * 2 },
     { 0.5, 0.49, -12.0 * 2 },
     { 1.0, 0.24, -12.0 * 2 },

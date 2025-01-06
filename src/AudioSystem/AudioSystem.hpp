@@ -2,6 +2,7 @@
 #define CPPSYNTH_AUDIOSYSTEM_AUDIOSYSTEM_HPP
 
 #include "../Utils/Array.hpp"
+#include "Events.hpp"
 #include <AL/al.h>
 #include <AL/alc.h>
 #include <atomic>
@@ -10,21 +11,6 @@
 #include <unordered_map>
 
 namespace CppSynth {
-
-	enum class EventType {
-		KEY_ON,
-		KEY_OFF
-	};
-
-	struct Event {
-		EventType type;
-		double pitch;
-	};
-
-	struct TimedEvent {
-		Event event;
-		uint64_t timeSamples;
-	};
 
 	// FWD DECL
 	namespace Instruments {

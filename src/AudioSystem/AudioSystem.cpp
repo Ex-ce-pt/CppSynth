@@ -124,7 +124,7 @@ void CppSynth::AudioSystem::play() noexcept
 
 		} while (state == AL_PLAYING && m_Playing);
 		m_Playing = false;
-		});
+	});
 }
 
 void CppSynth::AudioSystem::fillAudioBuffer(ALuint bufferID, size_t bufferStartTimeSamples) {
@@ -150,13 +150,15 @@ void CppSynth::AudioSystem::fillAudioBuffer(ALuint bufferID, size_t bufferStartT
 	std::cout << "Buffer Fill Time: " << ((std::chrono::steady_clock::now() - t).count() * 0.001 * 0.001) << "ms\n";
 }
 
+// BUG: account for the release of the final note
 uint64_t CppSynth::AudioSystem::getTracksTotalDurationSamples()
 {
 	uint64_t maxEventTimeSamples = 0;
 
 	if (!m_Tracks.expired()) {
 		for (const auto& [_, events] : *m_Tracks.lock()) {
-			maxEventTimeSamples = std::max_element(std::execution::par, events.begin(), events.end(), [](const TimedEvent& lhs, const TimedEvent& rhs) { return lhs.timeSamples < rhs.timeSamples; })->timeSamples;
+			uint64_t maxEventTimeSamplesForTrack = std::max_element(std::execution::par, events.begin(), events.end(), [](const TimedEvent& lhs, const TimedEvent& rhs) { return lhs.timeSamples < rhs.timeSamples; })->timeSamples;
+			maxEventTimeSamples = std::max(maxEventTimeSamples, maxEventTimeSamplesForTrack);
 		}
 	}
 

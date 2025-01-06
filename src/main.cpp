@@ -14,6 +14,8 @@ std::shared_ptr<std::unordered_map<CppSynth::Instruments::Instrument*, std::vect
 CppSynth::Instruments::SimpleSynth leadSynth(CppSynth::Instruments::SimpleSynth::WaveType::SINE);
 CppSynth::Instruments::SimpleSynth bassSynth(CppSynth::Instruments::SimpleSynth::WaveType::TRIANGLE);
 
+CppSynth::Instruments::SimpleSynth testSynth;
+
 void prepareTest(uint32_t sampleRate) {
     EVENTS_MELODY.clear();
     EVENTS_BASS.clear();
@@ -32,10 +34,10 @@ void prepareTest(uint32_t sampleRate) {
 
     std::sort(EVENTS_BASS.begin(), EVENTS_BASS.end(), [](const CppSynth::TimedEvent& lhs, const CppSynth::TimedEvent& rhs) { return lhs.timeSamples < rhs.timeSamples; });
 
-    tracks = std::make_shared<std::unordered_map<CppSynth::Instruments::Instrument*, std::vector<CppSynth::TimedEvent>>>(std::unordered_map<CppSynth::Instruments::Instrument*, std::vector<CppSynth::TimedEvent>>({
-        { &leadSynth, EVENTS_MELODY },
-        { &bassSynth, EVENTS_BASS }
-    }));
+    tracks = std::make_shared<std::unordered_map<CppSynth::Instruments::Instrument*, std::vector<CppSynth::TimedEvent>>>();
+    tracks->emplace(&leadSynth, EVENTS_MELODY);
+    tracks->emplace(&bassSynth, EVENTS_BASS);
+    tracks->emplace(&testSynth, std::vector<CppSynth::TimedEvent>{ { CppSynth::EventType::KEY_OFF, 0.0, 5 * sampleRate } });
 }
 
 int main() {

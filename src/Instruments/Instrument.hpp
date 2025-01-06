@@ -8,12 +8,6 @@
 
 namespace CppSynth::Instruments {
 
-    struct Note {
-        double startSec;
-        double durationSec;
-        double pitch;
-    };
-
     class Instrument {
     public:
         // ANY generator function must be able to fill any arbitrary buffer with any section of its correspondent audio.
