@@ -1,5 +1,10 @@
+#include "../Utils/Array.hpp"
+
 #include <AL/al.h>
 #include <cstdint>
+
+// This file is a mess, that's not important right now
+
 
 #define AUDIO_FORMAT AL_FORMAT_MONO16
 //#define AUDIO_FORMAT AL_FORMAT_MONO8
@@ -23,3 +28,12 @@ using Sample = int16_t;
 #define _SAMPLE_HIGHER_TYPE int32_t
 #endif
 #define SAMPLE_EQUILIBRIUM (static_cast<Sample>((static_cast<_SAMPLE_HIGHER_TYPE>(SAMPLE_MAX_VALUE) + static_cast<_SAMPLE_HIGHER_TYPE>(SAMPLE_MIN_VALUE)) / 2))
+
+namespace CppSynth {
+
+	/// <summary>
+	/// A buffer of samples. "A" stands for "Audio".
+	/// </summary>
+	using ABuffer = Array<Sample>;
+
+}

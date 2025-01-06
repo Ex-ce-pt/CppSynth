@@ -1,7 +1,6 @@
 #ifndef CPPSYNTH_AUDIOSYSTEM_BUFFER_HPP
 #define CPPSYNTH_AUDIOSYSTEM_BUFFER_HPP
 
-#include "../AudioSystem/Sample.hpp"
 #include <type_traits>
 
 namespace CppSynth {
@@ -66,11 +65,6 @@ namespace CppSynth {
 		Type* m_Data;
 		size_t m_Size;
 	};
-
-	/// <summary>
-	/// A buffer of samples. "A" stands for "Audio".
-	/// </summary>
-	using ABuffer = Array<Sample>;
 
 }
 

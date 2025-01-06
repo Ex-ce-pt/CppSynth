@@ -1,16 +1,13 @@
 #include "SimpleSynth.hpp"
 #include "../Utils/Utils.hpp"
 
-#define _USE_MATH_DEFINES
-#include <math.h>
-
 // Generators
 
 static void gen_sin(CppSynth::ABuffer& buffer, double amp, double freq, uint64_t sampleRate, size_t phaseSample = 0) noexcept
 {
     for (size_t i = 0; i < buffer.size(); i++) {
         double timeSec = static_cast<double>(phaseSample + i) / sampleRate;
-        Sample value = static_cast<Sample>(amp * SAMPLE_MAX_VALUE * sin(2.0 * M_PI * freq * timeSec));
+        Sample value = static_cast<Sample>(amp * SAMPLE_MAX_VALUE * sin(2.0 * PI * freq * timeSec));
         buffer[i] = value;
     }
 }
@@ -49,10 +46,14 @@ CppSynth::Instruments::SimpleSynth::SimpleSynth(WaveType wave)
 
 void CppSynth::Instruments::SimpleSynth::fillAudioBuffer(ABuffer& buffer, uint64_t bufferStartTimeSamples, const AudioSystem::AudioSystemSettings& audioSettings) noexcept
 {
-    if (m_Generator == nullptr) return;
+    if (m_Generator == nullptr) {
+        return;
+    }
 
     for (const TimedEvent& tevent : m_CurrentEvents) {
-        if (tevent.event.type == EventType::KEY_OFF) continue;
+        if (tevent.event.type == EventType::KEY_OFF) {
+            continue;
+        }
 
         // If positive, indicates a phase of the signal about to be generated.
         // If negative, indicates that the event starts somewhere in the middle of the buffer.

@@ -16,10 +16,13 @@ namespace CppSynth::Instruments {
 
     class Instrument {
     public:
-        // ANY generator function must be able to fill any arbitrary buffer with any section of its correspondent audio
+        // ANY generator function must be able to fill any arbitrary buffer with any section of its correspondent audio.
+        // Put simply, given a start time, the generator function has to play its audio into the given buffer.
         using GeneratorFn = void(*)(ABuffer& buffer, double amp, double freq, uint64_t sampleRate, uint64_t offsetSample);
 
     public:
+        virtual ~Instrument() = default;
+
         void onEvent(const TimedEvent& tevent);
         
         virtual void fillAudioBuffer(ABuffer& buffer, uint64_t bufferStartTimeSamples, const AudioSystem::AudioSystemSettings& audioSettings) noexcept = 0;
