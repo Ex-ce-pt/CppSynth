@@ -6,6 +6,7 @@
 #include "Instruments/SimpleSynth.hpp"
 
 #include <memory>
+#include <algorithm>
 
 std::vector<CppSynth::TimedEvent> EVENTS_MELODY;
 std::vector<CppSynth::TimedEvent> EVENTS_BASS;
@@ -22,10 +23,14 @@ void prepareTest(uint32_t sampleRate) {
         EVENTS_MELODY.push_back({ { CppSynth::EventType::KEY_OFF, note.pitch }, static_cast<uint64_t>((note.startSec + note.durationSec) * sampleRate) });
     }
 
+    std::sort(EVENTS_MELODY.begin(), EVENTS_MELODY.end(), [](const CppSynth::TimedEvent& lhs, const CppSynth::TimedEvent& rhs) { return lhs.timeSamples < rhs.timeSamples; });
+
     for (const auto& note : BASS) {
         EVENTS_BASS.push_back({ { CppSynth::EventType::KEY_ON, note.pitch }, static_cast<uint64_t>(note.startSec * sampleRate) });
         EVENTS_BASS.push_back({ { CppSynth::EventType::KEY_OFF, note.pitch }, static_cast<uint64_t>((note.startSec + note.durationSec) * sampleRate) });
     }
+
+    std::sort(EVENTS_BASS.begin(), EVENTS_BASS.end(), [](const CppSynth::TimedEvent& lhs, const CppSynth::TimedEvent& rhs) { return lhs.timeSamples < rhs.timeSamples; });
 
     tracks = std::make_shared<std::unordered_map<CppSynth::Instruments::Instrument*, std::vector<CppSynth::TimedEvent>>>(std::unordered_map<CppSynth::Instruments::Instrument*, std::vector<CppSynth::TimedEvent>>({
         { &leadSynth, EVENTS_MELODY },

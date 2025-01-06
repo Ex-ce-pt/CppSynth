@@ -34,7 +34,7 @@ CppSynth::AudioSystem::AudioSystemStatus CppSynth::AudioSystem::init() noexcept
 		return AudioSystemStatus::FAILED_TO_CREATE_CONTEXT;
 	}
 
-	alGenBuffers(static_cast<ALsizei>(m_Settings.numberOfAudioBuffers), m_AudioBuffers.Data());
+	alGenBuffers(static_cast<ALsizei>(m_Settings.numberOfAudioBuffers), m_AudioBuffers.data());
 	alGenSources(1, &m_Source);
 
 	m_Initialized = true;
@@ -47,7 +47,7 @@ void CppSynth::AudioSystem::close() noexcept
 	if (!m_Initialized) return;
 
 	alDeleteSources(1, &m_Source);
-	alDeleteBuffers(static_cast<ALsizei>(m_Settings.numberOfAudioBuffers), m_AudioBuffers.Data());
+	alDeleteBuffers(static_cast<ALsizei>(m_Settings.numberOfAudioBuffers), m_AudioBuffers.data());
 	alcMakeContextCurrent(NULL);
 	alcDestroyContext(m_CurrentContext);
 	alcCloseDevice(m_CurrentDevice);
@@ -84,7 +84,7 @@ void CppSynth::AudioSystem::play() noexcept
 		m_TimeSamples += m_Settings.audioBufferSize;
 	}
 
-	alSourceQueueBuffers(m_Source, static_cast<ALsizei>(m_Settings.numberOfAudioBuffers), m_AudioBuffers.Data());
+	alSourceQueueBuffers(m_Source, static_cast<ALsizei>(m_Settings.numberOfAudioBuffers), m_AudioBuffers.data());
 
 	// Arbitrary sleep time to let the audio buffers initialize fully, to be deleted
 	std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -131,7 +131,7 @@ void CppSynth::AudioSystem::fillAudioBuffer(ALuint bufferID, size_t bufferStartT
 	auto t = std::chrono::steady_clock::now();
 
 	CppSynth::ABuffer buffer(m_Settings.audioBufferSize);
-	memset(buffer.Data(), SAMPLE_EQUILIBRIUM, m_Settings.audioBufferSize * sizeof(Sample));
+	memset(buffer.data(), SAMPLE_EQUILIBRIUM, m_Settings.audioBufferSize * sizeof(Sample));
 
 	if (!m_Tracks.expired()) {
 		for (const auto& [instrument, events] : *m_Tracks.lock()) {
@@ -145,7 +145,7 @@ void CppSynth::AudioSystem::fillAudioBuffer(ALuint bufferID, size_t bufferStartT
 		}
 	}
 
-	alBufferData(bufferID, AUDIO_FORMAT, buffer.Data(), static_cast<ALsizei>(m_Settings.audioBufferSize * sizeof(Sample)), static_cast<ALsizei>(m_Settings.sampleRate));
+	alBufferData(bufferID, AUDIO_FORMAT, buffer.data(), static_cast<ALsizei>(m_Settings.audioBufferSize * sizeof(Sample)), static_cast<ALsizei>(m_Settings.sampleRate));
 
 	std::cout << "Buffer Fill Time: " << ((std::chrono::steady_clock::now() - t).count() * 0.001 * 0.001) << "ms\n";
 }
@@ -192,5 +192,5 @@ double CppSynth::AudioSystem::getTimeSeconds() noexcept
 
 double CppSynth::AudioSystem::getIdealLatencySeconds() noexcept
 {
-	return m_Settings.numberOfAudioBuffers * m_Settings.audioBufferSize / m_Settings.sampleRate;
+	return static_cast<double>(m_Settings.numberOfAudioBuffers) * m_Settings.audioBufferSize / m_Settings.sampleRate;
 }

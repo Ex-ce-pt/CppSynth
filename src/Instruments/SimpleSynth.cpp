@@ -8,7 +8,7 @@
 
 static void gen_sin(CppSynth::ABuffer& buffer, double amp, double freq, uint64_t sampleRate, size_t phaseSample = 0) noexcept
 {
-    for (size_t i = 0; i < buffer.Size(); i++) {
+    for (size_t i = 0; i < buffer.size(); i++) {
         double timeSec = static_cast<double>(phaseSample + i) / sampleRate;
         Sample value = static_cast<Sample>(amp * SAMPLE_MAX_VALUE * sin(2.0 * M_PI * freq * timeSec));
         buffer[i] = value;
@@ -17,7 +17,7 @@ static void gen_sin(CppSynth::ABuffer& buffer, double amp, double freq, uint64_t
 
 static void gen_saw(CppSynth::ABuffer& buffer, double amp, double freq, uint64_t sampleRate, size_t phaseSample = 0) noexcept
 {
-    for (size_t i = 0; i < buffer.Size(); i++) {
+    for (size_t i = 0; i < buffer.size(); i++) {
         double timeSec = static_cast<double>(phaseSample + i) / sampleRate;
         double x = freq * timeSec;
         Sample value = static_cast<Sample>((x - floor(x)) * amp * SAMPLE_MAX_VALUE);
@@ -27,7 +27,7 @@ static void gen_saw(CppSynth::ABuffer& buffer, double amp, double freq, uint64_t
 
 static void gen_triangle(CppSynth::ABuffer& buffer, double amp, double freq, uint64_t sampleRate, size_t phaseSample = 0) noexcept
 {
-    for (size_t i = 0; i < buffer.Size(); i++) {
+    for (size_t i = 0; i < buffer.size(); i++) {
         double timeSec = static_cast<double>(phaseSample + i) / sampleRate;
         double x = freq * timeSec;
         Sample value = static_cast<Sample>((4 * abs(x + 0.25 - floor(x + 0.75)) - 1) * amp * SAMPLE_MAX_VALUE);
@@ -66,13 +66,13 @@ void CppSynth::Instruments::SimpleSynth::fillAudioBuffer(ABuffer& buffer, uint64
         }
 
         // Render the data into a separate buffer
-        ABuffer noteDataBuffer(buffer.Size() - bufferOffset);
+        ABuffer noteDataBuffer(buffer.size() - bufferOffset);
 
         // TODO: make abstract
         m_Generator(noteDataBuffer, 0.3, A4 * pow(2, tevent.event.pitch / 12.0), audioSettings.sampleRate, phaseSample);
 
         // Merge the resulting buffer with the rest of the audio
-        for (size_t i = 0; i < noteDataBuffer.Size(); i++) {
+        for (size_t i = 0; i < noteDataBuffer.size(); i++) {
             buffer[bufferOffset + i] += noteDataBuffer[i];
         }
     }

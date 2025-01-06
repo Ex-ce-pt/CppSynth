@@ -1,7 +1,7 @@
 #ifndef CPPSYNTH_AUDIOSYSTEM_BUFFER_HPP
 #define CPPSYNTH_AUDIOSYSTEM_BUFFER_HPP
 
-#include "Sample.hpp"
+#include "../AudioSystem/Sample.hpp"
 #include <type_traits>
 
 namespace CppSynth {
@@ -27,7 +27,7 @@ namespace CppSynth {
 			memcpy(m_Data, other.m_Data, other.m_Size * sizeof(T));
 		}
 
-		constexpr Array(const Array&& other)
+		constexpr Array(Array&& other)
 		{
 			m_Size = other.m_Size;
 			m_Data = other.m_Data;
@@ -47,7 +47,7 @@ namespace CppSynth {
 			return *this;
 		}
 
-		constexpr Array& operator=(const Array&& other) noexcept
+		constexpr Array& operator=(Array&& other) noexcept
 		{
 			m_Size = other.m_Size;
 			m_Data = other.m_Data;
@@ -55,12 +55,12 @@ namespace CppSynth {
 			return *this;
 		}
 
-		inline constexpr Type* Data() noexcept { return m_Data; }
+		inline constexpr Type* data() noexcept { return m_Data; }
 		inline constexpr Type* operator*() noexcept { return *m_Data; }
 		inline constexpr Type& operator[](size_t index) { return m_Data[index]; }
 		inline constexpr Type* operator->() { return m_Data; }
 		inline constexpr operator Type* () { return m_Data; }
-		inline constexpr size_t Size() noexcept { return m_Size; }
+		inline constexpr size_t size() noexcept { return m_Size; }
 
 	private:
 		Type* m_Data;
