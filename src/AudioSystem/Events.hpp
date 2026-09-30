@@ -1,6 +1,8 @@
 #ifndef CPPSYNTH_AUDIOSYSTEM_EVENTS_HPP
 #define CPPSYNTH_AUDIOSYSTEM_EVENTS_HPP
 
+#include <cstdint>
+
 namespace CppSynth {
 
 	enum class EventType {

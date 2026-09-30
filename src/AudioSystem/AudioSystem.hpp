@@ -1,14 +1,14 @@
 #ifndef CPPSYNTH_AUDIOSYSTEM_AUDIOSYSTEM_HPP
 #define CPPSYNTH_AUDIOSYSTEM_AUDIOSYSTEM_HPP
 
-#include "../Utils/Array.hpp"
 #include "Events.hpp"
 #include <AL/al.h>
 #include <AL/alc.h>
 #include <atomic>
-#include <memory>
 #include <thread>
+#include <memory>
 #include <unordered_map>
+#include <vector>
 
 namespace CppSynth {
 
@@ -69,8 +69,8 @@ namespace CppSynth {
 		AudioSystemSettings m_Settings;
 		ALCdevice* m_CurrentDevice = nullptr;
 		ALCcontext* m_CurrentContext = nullptr;
-		ALuint m_Source = 0;
-		Array<ALuint> m_AudioBuffers;
+		ALuint m_AudioSourceId = 0;
+		std::vector<ALuint> m_AudioBuffers;
 
 		bool m_Initialized = false;
 		std::atomic_bool m_Playing = false;
