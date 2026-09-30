@@ -8,31 +8,58 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
+# ?
 #set(CPPSYNTH_BUILD_TYPE $<$<CONFIG:Debug>:DEBUG>)
 #set(CPPSYNTH_BUILD_TYPE $<$<CONFIG:Release>:RELEASE>)
 
-# Define a project
+###################################
+# Define the project
+
 project("CppSynth")
 
-# Get all source files
-file(GLOB_RECURSE CPPSYNTH_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-# Get all header files
-file(GLOB_RECURSE CPPSYNTH_HEADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h" "{CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
+set(CPPSYNTH_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+set(CPPSYNTH_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 
-# Add source and header files
+# Get all source files
+file(
+    GLOB_RECURSE CPPSYNTH_SOURCES CONFIGURE_DEPENDS
+    "${CPPSYNTH_ROOT_DIR}/src/*.cpp"
+)
+# Get all header files
+file(
+    GLOB_RECURSE CPPSYNTH_HEADERS CONFIGURE_DEPENDS
+    "${CPPSYNTH_ROOT_DIR}/src/*.h"
+    "${CPPSYNTH_ROOT_DIR}/src/*.hpp"
+    "${CPPSYNTH_ROOT_DIR}/include/*.h"
+    "${CPPSYNTH_ROOT_DIR}/include/*.hpp"
+)
+
+# Create executable target & add source and header files
 add_executable("CppSynth" "${CPPSYNTH_SOURCES}" "${CPPSYNTH_HEADERS}")
 # Add include directories
-target_include_directories("CppSynth" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
-
-#target_link_directories("CppSynth" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/lib/Windows/Debug/OpenAL/" "${CMAKE_CURRENT_SOURCE_DIR}/lib/Windows/Release/OpenAL/");
+target_include_directories("CppSynth" PUBLIC "${CPPSYNTH_ROOT_DIR}/include/")
 
 if(WIN32)
+
     # Get all debug libraries
-    file(GLOB_RECURSE CPPSYNTH_LIBS_DEBUG CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/lib/Windows/Debug/*/*.lib")
-    file(GLOB_RECURSE CPPSYNTH_DLLS_DEBUG CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/lib/Windows/Debug/*/*.dll")
+    file(GLOB_RECURSE CPPSYNTH_LIBS_DEBUG CONFIGURE_DEPENDS "${CPPSYNTH_ROOT_DIR}/lib/Windows/Debug/*/*.lib")
+    file(GLOB_RECURSE CPPSYNTH_DLLS_DEBUG CONFIGURE_DEPENDS "${CPPSYNTH_ROOT_DIR}/lib/Windows/Debug/*/*.dll")
     # Get all release libraries
-    file(GLOB_RECURSE CPPSYNTH_LIBS_RELEASE CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/lib/Windows/Release/*/*.lib")
-    file(GLOB_RECURSE CPPSYNTH_DLLS_RELEASE CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/lib/Windows/Release/*/*.dll")
+    file(GLOB_RECURSE CPPSYNTH_LIBS_RELEASE CONFIGURE_DEPENDS "${CPPSYNTH_ROOT_DIR}/lib/Windows/Release/*/*.lib")
+    file(GLOB_RECURSE CPPSYNTH_DLLS_RELEASE CONFIGURE_DEPENDS "${CPPSYNTH_ROOT_DIR}/lib/Windows/Release/*/*.dll")
+
+    # Copy over the DLL files (Windows)
+    foreach(DYNAMIC_LIBRARY IN LISTS CPPSYNTH_DLLS_DEBUG)
+        add_custom_command(
+            TARGET "CppSynth" POST_BUILD
+            COMMAND powershell -Command cp "${DYNAMIC_LIBRARY}" "${CPPSYNTH_OUT_DIR}"
+        )
+    endforeach()
+
+elseif(UNIX)
+
+    # Insert UNIX-specific code here
+
 endif()
 
 
