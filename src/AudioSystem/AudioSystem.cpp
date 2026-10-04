@@ -94,7 +94,7 @@ void CppSynth::AudioSystem::play() noexcept
 	alSourcePlay(m_AudioSourceId);
 	m_Playing = true;
 
-	m_AudioPlayerThread = std::make_unique<std::thread>([this]() {
+	m_AudioPlayerThread = std::thread([this]() {
 		double durationSamples = getTracksTotalDurationSamples();
 
 		// Wait for the sound to finish playing
@@ -108,7 +108,7 @@ void CppSynth::AudioSystem::play() noexcept
 			ALint numBuffersProcessed;
 			alGetSourcei(m_AudioSourceId, AL_BUFFERS_PROCESSED, &numBuffersProcessed);
 
-			for (size_t i = 0; i < numBuffersProcessed; i++) {
+			for (ALint i = 0; i < numBuffersProcessed; i++) {
 				ALuint buffer;
 				alSourceUnqueueBuffers(m_AudioSourceId, 1, &buffer);
 
@@ -140,16 +140,15 @@ void CppSynth::AudioSystem::fillAudioBuffer(ALuint bufferID, size_t bufferStartT
 		size_t instIdx = 0;
 
 		for (const auto& [instrument, events] : tracks) {
+			// TODO: find a way to register events in real time instead of looking for appropriate events every iteration
 			for (const auto& tevent : events) {
 				if (bufferStartTimeSamples <= tevent.timeSamples && tevent.timeSamples < bufferStartTimeSamples + m_Settings.audioBufferSize) {
 					instrument->onEvent(tevent);
 				}
 			}
 
-			//std::vector<Sample> instBuffer(m_Settings.audioBufferSize, SAMPLE_EQUILIBRIUM);
-			//std::span<Sample> instrumentBuffer(instBuffer.data(), m_Settings.audioBufferSize);
-			auto instrumentBufferStartIt = instrumentBufferArena.begin() + (m_Settings.audioBufferSize * instIdx);
-			auto instrumentBufferEndIt = instrumentBufferStartIt + m_Settings.audioBufferSize;
+			auto instrumentBufferStartIt = std::next(instrumentBufferArena.begin(), m_Settings.audioBufferSize * instIdx);
+			auto instrumentBufferEndIt = std::next(instrumentBufferStartIt, m_Settings.audioBufferSize);
 			std::span<Sample> instrumentBuffer(instrumentBufferStartIt, instrumentBufferEndIt);
 
 			instrument->fillAudioBuffer(instrumentBuffer, bufferStartTimeSamples, m_Settings);
@@ -195,9 +194,9 @@ void CppSynth::AudioSystem::pause() noexcept
 
 void CppSynth::AudioSystem::joinPlayerThread() noexcept
 {
-	if (!m_AudioPlayerThread) return;
+	if (!m_AudioPlayerThread.joinable()) return;
 
-	m_AudioPlayerThread->join();
+	m_AudioPlayerThread.join();
 }
 
 bool CppSynth::AudioSystem::isPlaying() noexcept

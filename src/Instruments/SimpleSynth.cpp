@@ -53,24 +53,39 @@ void CppSynth::Instruments::SimpleSynth::fillAudioBuffer(std::span<Sample> buffe
     }
 
     for (const TimedEvent& tevent : m_CurrentEvents) {
+
+        auto firstSampleToFill = buffer.begin();
+        auto lastSampleToFill = buffer.end();
+
         if (tevent.event.type == EventType::KEY_OFF) { // TODO: also render audio appropriately if the event ends in the middle of the buffer
+            // Positive - OFF event inside the buffer
+            // Negative - OFF event before the buffer started, skip
+            int64_t timeBetweenOffEventAndBufferStartSamples = static_cast<int64_t>(tevent.timeSamples - bufferStartTimeSamples);
+            
+            if (timeBetweenOffEventAndBufferStartSamples < 0) {
+                continue;
+            }
+
+            lastSampleToFill = std::next(buffer.begin(), timeBetweenOffEventAndBufferStartSamples);
+
+            // Problem: cannot calculate the phase now when the event has been overwritten
             continue;
         }
 
-        // If positive, indicates a phase of the signal about to be generated.
-        // If negative, indicates that the event starts somewhere in the middle of the buffer.
+        // If positive (event occurred before the buffer started), indicates a phase of the signal about to be generated.
+        // If negative (event occurred after the buffer started), indicates that the event starts somewhere in the middle of the buffer.
         int64_t timeBetweenEventAndBufferStartSamples = static_cast<int64_t>(bufferStartTimeSamples - tevent.timeSamples);
         
         uint64_t startingPhase = timeBetweenEventAndBufferStartSamples;
-        size_t startingBufferIdx = 0;
+        
 
         if (timeBetweenEventAndBufferStartSamples < 0) {
             startingPhase = 0;
-            startingBufferIdx = -timeBetweenEventAndBufferStartSamples;
+            firstSampleToFill = std::next(firstSampleToFill, -timeBetweenEventAndBufferStartSamples);
         }
 
         // Prepare section of buffer this note is supposed to render to
-        std::span<Sample> noteDataBufferSpan(buffer.begin() + startingBufferIdx, buffer.end()); // TODO: should not be end iterator ideally
+        std::span<Sample> noteDataBufferSpan(firstSampleToFill, lastSampleToFill); // TODO: should not be end iterator ideally
 
         // TODO: make abstract
         m_Generator(noteDataBufferSpan, 0.3, A4 * pow(2, tevent.event.pitch / 12.0), audioSettings.sampleRate, startingPhase);

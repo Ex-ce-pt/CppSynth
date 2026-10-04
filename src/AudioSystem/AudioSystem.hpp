@@ -75,7 +75,7 @@ namespace CppSynth {
 		bool m_Initialized = false;
 		std::atomic_bool m_Playing = false;
 		std::atomic_uint64_t m_TimeSamples = 0;
-		std::unique_ptr<std::thread> m_AudioPlayerThread;
+		std::thread m_AudioPlayerThread;
 		TimeChangeCallback m_TimeChangeCallback = nullptr;
 		std::weak_ptr<std::unordered_map<Instruments::Instrument*, std::vector<TimedEvent>>> m_Tracks;
 	};
