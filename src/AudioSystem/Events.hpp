@@ -9,10 +9,10 @@ namespace CppSynth {
 		KEY_ON,
 		KEY_OFF
 	};
-
+	
 	struct Event {
 		EventType type;
-		double pitch;
+		double pitch; //  TODO: rename into "keycode"?
 	};
 
 	struct TimedEvent {
