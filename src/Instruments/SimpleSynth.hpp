@@ -16,8 +16,6 @@ namespace CppSynth::Instruments {
     public:
         SimpleSynth(WaveType wave = WaveType::SINE);
 
-        //void fillAudioBuffer(std::span<Sample> buffer, uint64_t bufferStartTimeSamples, const AudioSystem::AudioSystemSettings& audioSettings) noexcept;
-
         void renderForEvent(std::span<Sample> buffer, const NoteRenderParams& params) noexcept override;
 
     private:

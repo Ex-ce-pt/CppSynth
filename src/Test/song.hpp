@@ -1,7 +1,7 @@
 // Warning
 // debug file
 
-#include "Instruments/Instrument.hpp"
+#include "../Instruments/Instrument.hpp"
 
 struct Note {
     double startSec;
@@ -9,8 +9,12 @@ struct Note {
     double pitch;
 };
 
-/*
-std::vector<Note> NOTES = {
+#define TEST 1
+
+#if TEST == 1
+
+// don't remember where from
+std::vector<Note> MELODY = {
     { 0.0, 0.5, 0.0 },
     { 1.0, 0.5, 0.0 },
     { 1.5, 0.25, -2.0 },
@@ -46,7 +50,10 @@ std::vector<Note> NOTES = {
     { 15.75, 0.25, 3.0 },
 
 };
-*/
+
+std::vector<Note> BASS = { };
+
+#elif TEST == 2
 
 // MEGALOVANIA
 std::vector<Note> MELODY = {
@@ -144,3 +151,5 @@ std::vector<Note> BASS = {
     { 12 + 3.5, 0.24, -12.0 * 2 - 2 },
     { 12 + 3.75, 0.24, -12.0 * 2 - 2 },
 };
+
+#endif

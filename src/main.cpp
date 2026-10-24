@@ -1,68 +1,35 @@
 ﻿#include "AudioSystem/AudioSystem.hpp"
+#include "Debug/Log.hpp"
 
-#include <cstdio>
-
-#include "song.hpp"
-#include "Instruments/SimpleSynth.hpp"
-
-#include <memory>
-#include <algorithm>
-
-std::vector<CppSynth::TimedEvent> EVENTS_MELODY;
-std::vector<CppSynth::TimedEvent> EVENTS_BASS;
-std::shared_ptr<std::unordered_map<CppSynth::Instruments::Instrument*, std::vector<CppSynth::TimedEvent>>> tracks;
-CppSynth::Instruments::SimpleSynth leadSynth(CppSynth::Instruments::SimpleSynth::WaveType::SINE);
-CppSynth::Instruments::SimpleSynth bassSynth(CppSynth::Instruments::SimpleSynth::WaveType::TRIANGLE);
-
-CppSynth::Instruments::SimpleSynth testSynth;
-
-void prepareTest(uint32_t sampleRate) {
-    EVENTS_MELODY.clear();
-    EVENTS_BASS.clear();
-
-    for (const auto& note : MELODY) {
-        EVENTS_MELODY.push_back({ { CppSynth::EventType::KEY_ON, note.pitch }, static_cast<uint64_t>(note.startSec * sampleRate) });
-        EVENTS_MELODY.push_back({ { CppSynth::EventType::KEY_OFF, note.pitch }, static_cast<uint64_t>((note.startSec + note.durationSec) * sampleRate) });
-    }
-
-    std::sort(EVENTS_MELODY.begin(), EVENTS_MELODY.end(), [](const CppSynth::TimedEvent& lhs, const CppSynth::TimedEvent& rhs) { return lhs.timeSamples < rhs.timeSamples; });
-
-    for (const auto& note : BASS) {
-        EVENTS_BASS.push_back({ { CppSynth::EventType::KEY_ON, note.pitch }, static_cast<uint64_t>(note.startSec * sampleRate) });
-        EVENTS_BASS.push_back({ { CppSynth::EventType::KEY_OFF, note.pitch }, static_cast<uint64_t>((note.startSec + note.durationSec) * sampleRate) });
-    }
-
-    std::sort(EVENTS_BASS.begin(), EVENTS_BASS.end(), [](const CppSynth::TimedEvent& lhs, const CppSynth::TimedEvent& rhs) { return lhs.timeSamples < rhs.timeSamples; });
-
-    tracks = std::make_shared<std::unordered_map<CppSynth::Instruments::Instrument*, std::vector<CppSynth::TimedEvent>>>();
-    tracks->emplace(&leadSynth, EVENTS_MELODY);
-    tracks->emplace(&bassSynth, EVENTS_BASS);
-    tracks->emplace(&testSynth, std::vector<CppSynth::TimedEvent>{ { CppSynth::EventType::KEY_OFF, 0.0, 5 * sampleRate } });
-}
+#include "Test/Tests.hpp"
 
 int main() {
-    prepareTest(CppSynth::AudioSystem::DEFAULT_SAMPLE_RATE);
+    //auto tracks = Test::prepareTestComplex(CppSynth::AudioSystem::DEFAULT_SAMPLE_RATE);
+    auto tracks = Test::prepareTestSimple(CppSynth::AudioSystem::DEFAULT_SAMPLE_RATE);
 
-    printf("Initializing the Audio System [DEFAULT settings]...\n");
+    CppSynth::Debug::log("Initializing the Audio System [DEFAULT settings]...\n");
 
     // Initialize OpenAL
     CppSynth::AudioSystem audioSystem;
     auto status = audioSystem.init();
+
     switch (status) {
         case CppSynth::AudioSystem::AudioSystemStatus::SUCCESS:
-            printf("Audio System Initialized\n");
+            CppSynth::Debug::log("Audio System Initialized\n");
             break;
 
         case CppSynth::AudioSystem::AudioSystemStatus::FAILED_TO_CONNECT_DEVICE:
-            printf("Failed to connect the default device\n");
+            CppSynth::Debug::log("Failed to connect the default device\n");
             return -1;
 
         case CppSynth::AudioSystem::AudioSystemStatus::FAILED_TO_CREATE_CONTEXT:
-            printf("Failed to create context for the default device\n");
+            CppSynth::Debug::log("Failed to create context for the default device\n");
             return -2;
 
         default:
-            printf("Undefined status of the Audio System: %i\n", status);
+            CppSynth::Debug::log("Undefined status of the Audio System: ");
+            CppSynth::Debug::log((int64_t) status);
+            CppSynth::Debug::log("\n");
             return -10;
     }
     
@@ -71,8 +38,8 @@ int main() {
     audioSystem.play();
     audioSystem.joinPlayerThread();
 
-    printf("Finished playing\n");
-    printf("Closing the Audio System...\n");
+    CppSynth::Debug::log("Finished playing\n");
+    CppSynth::Debug::log("Closing the Audio System...\n");
     audioSystem.close();
 
     return 0;

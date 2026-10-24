@@ -48,7 +48,11 @@ if(WIN32)
     file(GLOB_RECURSE CPPSYNTH_LIBS_RELEASE CONFIGURE_DEPENDS "${CPPSYNTH_ROOT_DIR}/lib/Windows/Release/*/*.lib")
     file(GLOB_RECURSE CPPSYNTH_DLLS_RELEASE CONFIGURE_DEPENDS "${CPPSYNTH_ROOT_DIR}/lib/Windows/Release/*/*.dll")
 
-    # Copy over the DLL files (Windows)
+    # The executable always looks for DLL files in the same directory as itself,
+    # so for it to function there need to be a copy of the DLLs in the build directory.
+    # There probably is a smarter way to achieve that...
+    
+    # Copy over the DLL files (Windows, Debug)
     foreach(DYNAMIC_LIBRARY IN LISTS CPPSYNTH_DLLS_DEBUG)
         add_custom_command(
             TARGET "CppSynth" POST_BUILD
@@ -56,9 +60,16 @@ if(WIN32)
         )
     endforeach()
 
+    #foreach(DYNAMIC_LIBRARY IN LISTS CPPSYNTH_DLLS_RELEASE)
+    #    add_custom_command(
+    #        TARGET "CppSynth" POST_BUILD
+    #        COMMAND powershell -Command cp "${DYNAMIC_LIBRARY}" "${CPPSYNTH_OUT_DIR}"
+    #    )
+    #endforeach()
+
 elseif(UNIX)
 
-    # Insert UNIX-specific code here
+    message(FATAL_ERROR "An appropriate CMake configuration is not yet done for the Linux build.")
 
 endif()
 

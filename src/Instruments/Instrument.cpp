@@ -3,7 +3,6 @@
 #include "../Utils/Utils.hpp"
 
 #include <algorithm>
-#include <execution>
 
 void CppSynth::Instruments::Instrument::onEvent(const TimedEvent& tevent)
 {
@@ -15,7 +14,13 @@ void CppSynth::Instruments::Instrument::onEvent(const TimedEvent& tevent)
 
 	case EventType::KEY_OFF:
 		{
-			auto correspondingKeyOn = std::find_if(std::execution::par, m_CurrentEvents.begin(), m_CurrentEvents.end(), [&tevent](const TimedEvent& e) { return e.event.type == EventType::KEY_ON && e.event.pitch == tevent.event.pitch; });
+			auto correspondingKeyOn = std::find_if(
+                m_CurrentEvents.begin(),
+                m_CurrentEvents.end(),
+                [&tevent](const TimedEvent& e) {
+                    return e.event.type == EventType::KEY_ON && e.event.pitch == tevent.event.pitch;
+                }
+            );
 			if (correspondingKeyOn == m_CurrentEvents.end()) {
 				return;
 			}
@@ -51,10 +56,10 @@ void CppSynth::Instruments::Instrument::fillAudioBuffer(std::span<Sample> buffer
         // Prepare section of buffer this note is supposed to render to
         std::span<Sample> noteDataBufferSpan(firstSampleToFill, lastSampleToFill);
 
-        CppSynth::Instruments::Instrument::NoteRenderParams params = {
+        NoteRenderParams params = {
             .timedEvent = tevent,
             .generatedSignalStartOffset = startingPhase,
-            .amplitude = 0.3,
+            .amplitude = 0.03,
             .pitch = A4 * pow(2, tevent.event.pitch / 12.0),
             .sampleRate = audioSettings.sampleRate,
             .stereo = audioSettings.stereo,

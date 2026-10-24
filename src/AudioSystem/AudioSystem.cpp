@@ -1,12 +1,13 @@
 #include "AudioSystem.hpp"
 #include "Sample.hpp"
-#include "../Instruments/SimpleSynth.hpp"
+#include "../Instruments/Instrument.hpp"
+
+#include "../Debug/Log.hpp"
 
 #include <span>
 #include <chrono>
 #include <algorithm>
 #include <execution>
-#include <iostream>
 
 CppSynth::AudioSystem::AudioSystem(const AudioSystemSettings& settings)
 	: m_Settings(settings), m_AudioBuffers(settings.numberOfAudioBuffers)
@@ -156,7 +157,6 @@ void CppSynth::AudioSystem::fillAudioBuffer(ALuint bufferID, size_t bufferStartT
 			instIdx++;
 		}
 
-		// TODO: try to optimize further
 		for (size_t i = 0; i < instrumentBufferArena.size(); i++) {
 			totalBuffer[i % m_Settings.audioBufferSize] += instrumentBufferArena[i];
 		}
@@ -169,7 +169,9 @@ void CppSynth::AudioSystem::fillAudioBuffer(ALuint bufferID, size_t bufferStartT
 
 	alBufferData(bufferID, AUDIO_FORMAT, nativeSampleBuffer.data(), static_cast<ALsizei>(m_Settings.audioBufferSize * sizeof(NativeSampleT)), static_cast<ALsizei>(m_Settings.sampleRate));
 
-	std::cout << "Buffer Fill Time: " << ((std::chrono::steady_clock::now() - t).count() * 0.001 * 0.001) << "ms\n";
+	Debug::log("Buffer fill time: ");
+	Debug::log(((std::chrono::steady_clock::now() - t).count() * 0.001 * 0.001));
+	Debug::log("ms\n");
 }
 
 // BUG: account for the release of the final note

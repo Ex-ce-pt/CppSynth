@@ -2,10 +2,11 @@
 #include "../Utils/Utils.hpp"
 
 using CppSynth::Sample;
+using NoteRenderParams = CppSynth::Instruments::Instrument::NoteRenderParams;
 
 // Generators
 
-static void gen_sin(std::span<Sample> buffer, const CppSynth::Instruments::Instrument::NoteRenderParams& params) noexcept
+static void gen_sin(std::span<Sample> buffer, const NoteRenderParams& params) noexcept
 {
     size_t phaseSample = params.generatedSignalStartOffset;
     for (size_t i = 0; i < buffer.size(); i++) {
@@ -15,7 +16,7 @@ static void gen_sin(std::span<Sample> buffer, const CppSynth::Instruments::Instr
     }
 }
 
-static void gen_saw(std::span<Sample> buffer, const CppSynth::Instruments::Instrument::NoteRenderParams& params) noexcept
+static void gen_saw(std::span<Sample> buffer, const NoteRenderParams& params) noexcept
 {
     size_t phaseSample = params.generatedSignalStartOffset;
     for (size_t i = 0; i < buffer.size(); i++) {
@@ -26,7 +27,7 @@ static void gen_saw(std::span<Sample> buffer, const CppSynth::Instruments::Instr
     }
 }
 
-static void gen_triangle(std::span<Sample> buffer, const CppSynth::Instruments::Instrument::NoteRenderParams& params) noexcept
+static void gen_triangle(std::span<Sample> buffer, const NoteRenderParams& params) noexcept
 {
     size_t phaseSample = params.generatedSignalStartOffset;
     for (size_t i = 0; i < buffer.size(); i++) {
