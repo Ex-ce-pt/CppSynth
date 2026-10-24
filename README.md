@@ -11,7 +11,7 @@ Technical details:
 
 | Spec                     | Technology                                      |
 |--------------------------|-------------------------------------------------|
-| Language                 | **C++**                                         |
+| Language                 | **C++20**                                        |
 | Frameworks               | **OpenAL**, possibly **wxWidgets** later for UI |
 | Build system             | **CMake**                                       |
 | Requirements (as of now) | **MSVC**, **Powershell**                        |
