@@ -56,7 +56,7 @@ if(WIN32)
     foreach(DYNAMIC_LIBRARY IN LISTS CPPSYNTH_DLLS_DEBUG)
         add_custom_command(
             TARGET "CppSynth" POST_BUILD
-            COMMAND powershell -Command cp "${DYNAMIC_LIBRARY}" "${CPPSYNTH_OUT_DIR}"
+            COMMAND powershell -Command cp \"${DYNAMIC_LIBRARY}\" \"${CPPSYNTH_OUT_DIR}\"
         )
     endforeach()
 
